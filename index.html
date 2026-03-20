@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>핸드드립 타이머</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0e0e0e; --surface:#161616; --surface2:#1e1e1e;
+    --border:#2a2a2a; --border-hi:#3c3c3c;
+    --accent:#c8a96e; --accent2:#e8c990;
+    --text:#f0ede8; --muted:#666;
+    --danger:#e05a4a; --success:#5ab870; --radius:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Noto Sans KR',sans-serif;
+    min-height:100vh;display:flex;
+    align-items:flex-start;justify-content:center;
+    padding:32px 20px 80px;
+  }
+  .container{width:100%;max-width:460px;}
+
+  /* 헤더 */
+  .header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:28px;}
+  .logo{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;color:var(--accent);text-transform:uppercase;margin-bottom:6px;}
+  h1{font-size:22px;font-weight:300;letter-spacing:-.02em;line-height:1.2;}
+  .icon-btn{
+    width:36px;height:36px;border:1px solid var(--border);border-radius:var(--radius);
+    background:var(--surface);color:var(--muted);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:border-color .15s,color .15s;flex-shrink:0;
+  }
+  .icon-btn:hover{border-color:var(--border-hi);color:var(--text);}
+  .icon-btn.active{border-color:var(--accent);color:var(--accent);}
+  .icon-btn svg{width:16px;height:16px;}
+
+  /* 설정 패널 */
+  .slide-panel{overflow:hidden;max-height:0;opacity:0;transition:max-height .32s ease,opacity .2s ease,margin .2s ease;margin-bottom:0;}
+  .slide-panel.open{max-height:900px;opacity:1;margin-bottom:20px;}
+  .panel-inner{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+  .panel-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:14px;}
+
+  .setting-row{padding:11px 0;border-bottom:1px solid var(--border);}
+  .setting-row:last-child{border-bottom:none;padding-bottom:0;}
+  .setting-row:first-of-type{padding-top:0;}
+  .setting-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:0;}
+  .setting-label{font-size:13px;color:var(--text);}
+  .setting-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+  /* 토글 */
+  .toggle{position:relative;width:36px;height:20px;flex-shrink:0;}
+  .toggle input{opacity:0;width:0;height:0;}
+  .slider-sw{position:absolute;inset:0;background:var(--border);border-radius:20px;cursor:pointer;transition:background .2s;}
+  .slider-sw::before{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .2s;}
+  .toggle input:checked+.slider-sw{background:var(--accent);}
+  .toggle input:checked+.slider-sw::before{transform:translateX(16px);}
+
+  /* API 입력 */
+  .api-input-row{display:flex;gap:8px;margin-top:10px;margin-bottom:6px;}
+  .api-input{
+    flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:5px;
+    color:var(--text);font-family:'DM Mono',monospace;font-size:12px;
+    padding:7px 10px;outline:none;transition:border-color .15s;
+  }
+  .api-input:focus{border-color:var(--accent);}
+  .api-input::placeholder{color:#3a3a3a;}
+  .api-save-btn{
+    padding:7px 14px;border-radius:5px;border:1px solid var(--accent);background:transparent;
+    color:var(--accent);font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;
+    white-space:nowrap;transition:background .15s;
+  }
+  .api-save-btn:hover{background:rgba(200,169,110,.1);}
+  .api-status{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+  .api-status.ok{color:var(--success);}
+  .api-status.err{color:var(--danger);}
+  .status-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+  /* 보이스 셀렉트 */
+  .voice-select{
+    background:var(--surface2);border:1px solid var(--border);border-radius:5px;
+    color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:12px;
+    padding:6px 10px;outline:none;cursor:pointer;transition:border-color .15s;
+  }
+  .voice-select:focus{border-color:var(--accent);}
+
+  /* 슬라이더 세트 */
+  .sliders-grid{display:grid;gap:12px;margin-top:12px;}
+  .slider-item{}
+  .slider-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .slider-name{font-size:12px;color:var(--muted);}
+  .slider-val{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);}
+  input[type=range]{
+    width:100%;-webkit-appearance:none;appearance:none;
+    height:3px;background:var(--border);border-radius:3px;outline:none;cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+    background:var(--accent);cursor:pointer;transition:transform .1s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
+  input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;}
+
+  /* 미리듣기 버튼 */
+  .preview-btn{
+    display:flex;align-items:center;gap:8px;width:100%;
+    margin-top:12px;padding:9px 14px;border-radius:var(--radius);
+    border:1px solid var(--border-hi);background:var(--surface2);
+    color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:12px;
+    cursor:pointer;transition:border-color .15s,color .15s;
+  }
+  .preview-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .preview-btn.loading{pointer-events:none;color:var(--muted);}
+  .preview-btn svg{width:14px;height:14px;flex-shrink:0;}
+  .preview-dots{display:none;gap:3px;margin-left:auto;}
+  .preview-btn.loading .preview-dots{display:flex;}
+  .preview-dots span{width:3px;height:3px;border-radius:50%;background:var(--accent);animation:bop .8s infinite;}
+  .preview-dots span:nth-child(2){animation-delay:.15s;}
+  .preview-dots span:nth-child(3){animation-delay:.3s;}
+
+  /* 설정 변경 알림 배지 */
+  .pending-badge{
+    display:none;font-family:'DM Mono',monospace;font-size:9px;
+    padding:2px 6px;border-radius:3px;
+    background:rgba(200,169,110,.15);color:var(--accent);
+    letter-spacing:.06em;text-transform:uppercase;margin-left:6px;vertical-align:middle;
+  }
+  .pending-badge.on{display:inline;}
+
+  /* 설정 저장 버튼 */
+  .settings-save-row{
+    display:flex;gap:8px;padding-top:14px;margin-top:4px;
+    border-top:1px solid var(--border);
+  }
+  .settings-save-btn{
+    flex:1;padding:10px;border-radius:var(--radius);
+    border:1px solid var(--accent);background:var(--accent);
+    color:#0e0e0e;font-family:'Noto Sans KR',sans-serif;
+    font-size:13px;font-weight:500;cursor:pointer;
+    transition:background .15s,transform .1s;
+  }
+  .settings-save-btn:hover{background:var(--accent2);}
+  .settings-save-btn:active{transform:scale(.98);}
+  .settings-cancel-btn{
+    padding:10px 16px;border-radius:var(--radius);
+    border:1px solid var(--border);background:transparent;
+    color:var(--muted);font-family:'Noto Sans KR',sans-serif;
+    font-size:13px;cursor:pointer;transition:border-color .15s,color .15s;
+  }
+  .settings-cancel-btn:hover{border-color:var(--muted);color:var(--text);}
+
+  /* 섹션 레이블 */
+  .section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
+
+  .gist-status-bar{
+    display:flex;align-items:center;gap:8px;
+    font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);
+    margin-bottom:10px;
+  }
+  /* 레시피 패널 */
+  .recipe-dropdown-row{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
+  .recipe-select{
+    flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;
+    padding:9px 12px;outline:none;cursor:pointer;transition:border-color .15s;
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;
+  }
+  .recipe-select:focus{border-color:var(--accent);}
+  .recipe-load-btn{
+    padding:9px 14px;border-radius:var(--radius);border:1px solid var(--border);background:transparent;
+    color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;
+    white-space:nowrap;transition:border-color .15s,color .15s;
+  }
+  .recipe-load-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+  .recipe-action-row{display:flex;gap:8px;margin-bottom:20px;}
+  .recipe-name-input{
+    flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;
+    padding:9px 12px;outline:none;transition:border-color .15s;
+  }
+  .recipe-name-input:focus{border-color:var(--accent);}
+  .recipe-name-input::placeholder{color:#3a3a3a;}
+  .recipe-save-btn{
+    padding:9px 14px;border-radius:var(--radius);border:1px solid var(--accent);background:transparent;
+    color:var(--accent);font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;
+    white-space:nowrap;transition:background .15s;
+  }
+  .recipe-save-btn:hover{background:rgba(200,169,110,.1);}
+  .recipe-default-btn{
+    padding:9px 14px;border-radius:var(--radius);border:1px solid var(--border);background:transparent;
+    color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;
+    white-space:nowrap;transition:border-color .15s,color .15s;
+  }
+  .recipe-default-btn:hover{border-color:var(--success);color:var(--success);}
+  .recipe-default-btn.is-default{border-color:var(--success);color:var(--success);}
+  .recipe-del-btn{
+    padding:9px 10px;border-radius:var(--radius);border:1px solid var(--border);background:transparent;
+    color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;
+    transition:border-color .15s,color .15s;
+  }
+  .recipe-del-btn:hover{border-color:var(--danger);color:var(--danger);}
+  .recipe-hint{font-size:11px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
+  .recipe-hint a{color:var(--accent);cursor:pointer;text-decoration:none;}
+  .recipe-hint a:hover{text-decoration:underline;}
+
+  /* 편집기 */
+  #editorPanel{margin-bottom:24px;}
+  .total-preview{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 0 14px;border-bottom:1px solid var(--border);margin-bottom:12px;
+  }
+  .total-preview .lbl{font-size:12px;color:var(--muted);}
+  .total-preview .val{font-family:'DM Mono',monospace;font-size:14px;color:var(--accent);}
+
+  .step-row{
+    display:flex;align-items:center;gap:8px;
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:10px 12px;margin-bottom:6px;transition:border-color .15s;
+  }
+  .step-row:hover{border-color:var(--border-hi);}
+  .step-idx{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);width:18px;text-align:right;flex-shrink:0;}
+  .step-name-input{
+    flex:1;background:transparent;border:none;color:var(--text);
+    font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:300;outline:none;
+  }
+  .step-name-input::placeholder{color:#3a3a3a;}
+  .step-sec-input{
+    width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;
+    color:var(--text);font-family:'DM Mono',monospace;font-size:13px;
+    text-align:center;padding:4px 6px;outline:none;
+  }
+  .step-sec-input:focus{border-color:var(--accent);}
+  .sec-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);flex-shrink:0;}
+  .del-btn{
+    width:22px;height:22px;border:none;background:none;color:#3a3a3a;cursor:pointer;
+    font-size:17px;display:flex;align-items:center;justify-content:center;
+    border-radius:4px;flex-shrink:0;transition:color .15s,background .15s;
+  }
+  .del-btn:hover{color:var(--danger);background:rgba(224,90,74,.1);}
+  .add-btn{
+    width:100%;border:1px dashed var(--border);background:none;color:var(--muted);
+    font-family:'Noto Sans KR',sans-serif;font-size:13px;padding:9px;border-radius:var(--radius);
+    cursor:pointer;transition:border-color .15s,color .15s;margin-bottom:20px;
+  }
+  .add-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+  .btn-row{display:flex;gap:8px;}
+  .btn-primary{
+    flex:1;padding:12px;border-radius:var(--radius);border:1px solid var(--accent);
+    background:var(--accent);color:#0e0e0e;font-family:'Noto Sans KR',sans-serif;
+    font-size:14px;font-weight:500;cursor:pointer;transition:background .15s,transform .1s;
+  }
+  .btn-primary:hover{background:var(--accent2);}
+  .btn-primary:active{transform:scale(.98);}
+  .btn-secondary{
+    padding:12px 16px;border-radius:var(--radius);border:1px solid var(--border);
+    background:transparent;color:var(--muted);font-family:'Noto Sans KR',sans-serif;
+    font-size:13px;cursor:pointer;transition:border-color .15s,color .15s;
+  }
+  .btn-secondary:hover{border-color:var(--muted);color:var(--text);}
+
+  /* 타이머 */
+  #timerPanel{display:none;}
+  #timerPanel.active{display:block;}
+
+  .total-bar-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+  .total-bar-lbl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;}
+  .total-time-val{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);}
+  .total-track{height:3px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:5px;}
+  .total-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 1s linear;}
+  .step-track{height:2px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:20px;}
+  .step-fill{height:100%;background:rgba(200,169,110,.35);border-radius:2px;transition:width 1s linear;}
+
+  .main-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:26px 22px 18px;text-align:center;margin-bottom:12px;
+  }
+  .step-tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--accent);text-transform:uppercase;margin-bottom:10px;}
+  .step-title{font-size:19px;font-weight:300;margin-bottom:14px;}
+  .time-display{
+    font-family:'DM Mono',monospace;font-size:62px;font-weight:300;
+    letter-spacing:-.02em;line-height:1;margin-bottom:16px;color:var(--text);transition:color .3s;
+  }
+  .time-display.urgent{color:var(--danger);}
+  .card-meta{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border);padding-top:14px;gap:4px;}
+  .meta-item{text-align:center;}
+  .meta-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}
+  .meta-val{font-family:'DM Mono',monospace;font-size:14px;color:var(--text);}
+  .meta-val.hi{color:var(--accent);}
+
+  .voice-loading{
+    display:none;align-items:center;gap:6px;
+    font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);height:20px;margin-bottom:6px;
+  }
+  .voice-loading.on{display:flex;}
+  .dots{display:flex;gap:3px;}
+  .dots span{width:4px;height:4px;border-radius:50%;background:var(--accent);animation:bop .8s infinite;}
+  .dots span:nth-child(2){animation-delay:.15s;}
+  .dots span:nth-child(3){animation-delay:.3s;}
+  @keyframes bop{0%,80%,100%{transform:translateY(0);opacity:.3;}40%{transform:translateY(-4px);opacity:1;}}
+
+  .next-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:11px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;
+  }
+  .next-card .lbl{font-size:11px;color:var(--muted);}
+  .next-card .val{font-size:13px;color:var(--text);}
+
+  .step-list{margin-bottom:16px;}
+  .step-mini{
+    display:flex;align-items:center;gap:10px;padding:7px 0;
+    font-size:13px;color:#3a3a3a;border-bottom:1px solid var(--border);
+  }
+  .step-mini:last-child{border-bottom:none;}
+  .step-mini.done{color:#2e2e2e;}
+  .step-mini.done .dot{background:#2e2e2e;}
+  .step-mini.current{color:var(--text);}
+  .step-mini.current .dot{background:var(--accent);}
+  .dot{width:5px;height:5px;border-radius:50%;background:#333;flex-shrink:0;}
+  .step-mini-time{margin-left:auto;font-family:'DM Mono',monospace;font-size:11px;color:inherit;}
+
+  .done-banner{text-align:center;padding:30px 0 18px;}
+  .done-icon{font-size:34px;margin-bottom:12px;}
+  .done-title{font-size:21px;font-weight:300;margin-bottom:6px;}
+  .done-sub{font-size:13px;color:var(--muted);}
+  .done-total{font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);margin-top:10px;}
+
+  /* 토스트 */
+  .toast{
+    position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:9px 18px;font-size:13px;color:var(--text);
+    opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap;
+    z-index:999;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media(max-width:400px){.time-display{font-size:50px;}}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 헤더 -->
+  <div class="header">
+    <div>
+      <div class="logo">Hand Drip Timer</div>
+      <h1>핸드드립<br>타이머</h1>
+    </div>
+    <button class="icon-btn" id="settingsBtn" title="설정">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- 설정 패널 -->
+  <div class="slide-panel" id="settingsPanel">
+    <div class="panel-inner">
+      <div class="panel-title">설정 <span class="pending-badge" id="pendingBadge">미저장</span></div>
+
+      <!-- 음성 안내 토글 -->
+      <div class="setting-row">
+        <div class="setting-head">
+          <div>
+            <div class="setting-label">음성 안내</div>
+            <div class="setting-sub">단계 시작·완료·카운트다운</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="voiceToggle" checked>
+            <span class="slider-sw"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- API 키 -->
+      <div class="setting-row">
+        <div class="setting-label">ElevenLabs API 키</div>
+        <div class="setting-sub">자연스러운 한국어 AI 음성 사용</div>
+        <div class="api-input-row">
+          <input class="api-input" type="password" id="apiKeyInput" placeholder="sk_...">
+          <button class="api-save-btn" id="apiSaveBtn">저장</button>
+        </div>
+        <div class="api-status" id="apiStatus">
+          <span class="status-dot"></span>
+          <span id="apiStatusText">미연결 — 브라우저 기본 음성 사용 중</span>
+        </div>
+      </div>
+
+      <!-- 보이스 선택 -->
+      <div class="setting-row">
+        <div class="setting-head">
+          <div>
+            <div class="setting-label">보이스</div>
+            <div class="setting-sub">한국어 지원 다국어 보이스</div>
+          </div>
+          <select class="voice-select" id="voiceSelect">
+            <option value="nPczCjzI2devNBz1zQrb">Brian</option>
+            <option value="cgSgspJ2msm6clMCkdW9">Jessica</option>
+            <option value="iP95p4xoKVk53GoZ742B">Chris</option>
+            <option value="onwK4e9ZLuTAKqWW03F9">Daniel</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 음성 파라미터 슬라이더 -->
+      <div class="setting-row">
+        <div class="setting-label">음성 파라미터</div>
+        <div class="setting-sub">값을 고정하면 매번 동일한 톤·속도로 재생됩니다</div>
+        <div class="sliders-grid">
+
+          <div class="slider-item">
+            <div class="slider-header">
+              <span class="slider-name">안정감 (Stability)</span>
+              <span class="slider-val" id="stabilityVal">0.75</span>
+            </div>
+            <input type="range" id="stabilitySlider" min="0" max="1" step="0.05" value="0.75">
+            <div style="display:flex;justify-content:space-between;margin-top:3px;">
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">다양</span>
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">일정</span>
+            </div>
+          </div>
+
+          <div class="slider-item">
+            <div class="slider-header">
+              <span class="slider-name">유사도 (Similarity)</span>
+              <span class="slider-val" id="similarityVal">0.75</span>
+            </div>
+            <input type="range" id="similaritySlider" min="0" max="1" step="0.05" value="0.75">
+            <div style="display:flex;justify-content:space-between;margin-top:3px;">
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">낮음</span>
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">높음</span>
+            </div>
+          </div>
+
+          <div class="slider-item">
+            <div class="slider-header">
+              <span class="slider-name">말하기 속도 (Speed)</span>
+              <span class="slider-val" id="speedVal">0.95</span>
+            </div>
+            <input type="range" id="speedSlider" min="0.7" max="1.2" step="0.05" value="0.95">
+            <div style="display:flex;justify-content:space-between;margin-top:3px;">
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">느리게</span>
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">빠르게</span>
+            </div>
+          </div>
+
+          <div class="slider-item">
+            <div class="slider-header">
+              <span class="slider-name">표현 스타일 (Style)</span>
+              <span class="slider-val" id="styleVal">0.10</span>
+            </div>
+            <input type="range" id="styleSlider" min="0" max="0.5" step="0.05" value="0.10">
+            <div style="display:flex;justify-content:space-between;margin-top:3px;">
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">차분</span>
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">강조</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 미리듣기 버튼 -->
+        <button class="preview-btn" id="previewBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          <span id="previewBtnText">현재 파라미터로 미리 듣기</span>
+          <div class="preview-dots"><span></span><span></span><span></span></div>
+        </button>
+      </div>
+
+      <!-- GitHub Gist 토큰 -->
+      <div class="setting-row">
+        <div class="setting-label">GitHub Gist 토큰</div>
+        <div class="setting-sub">레시피를 Gist에 저장해 어디서든 불러올 수 있어요</div>
+        <div class="api-input-row">
+          <input class="api-input" type="password" id="gistTokenInput" placeholder="ghp_...">
+          <button class="api-save-btn" id="gistConnectBtn">연결</button>
+        </div>
+        <div class="api-status" id="gistStatus">
+          <span class="status-dot"></span>
+          <span id="gistStatusText">미연결 — 토큰을 입력하면 Gist에 동기화됩니다</span>
+        </div>
+      </div>
+
+      <!-- 설정 저장 / 취소 -->
+      <div class="settings-save-row">
+        <button class="settings-save-btn" id="settingsSaveBtn">설정 저장</button>
+        <button class="settings-cancel-btn" id="settingsCancelBtn">취소</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 편집 패널 -->
+  <div id="editorPanel">
+
+    <!-- 레시피 프로파일 -->
+    <div class="section-label">레시피 프로파일</div>
+
+    <!-- Gist 동기화 상태 -->
+    <div class="gist-status-bar" id="gistSyncBar" style="display:none">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <span id="gistSyncText">Gist 동기화 중...</span>
+    </div>
+
+    <!-- 드롭다운 + 불러오기 -->
+    <div class="recipe-dropdown-row">
+      <select class="recipe-select" id="recipeSelect">
+        <option value="">— 레시피 선택 —</option>
+      </select>
+      <button class="recipe-load-btn" id="recipeLoadBtn" style="display:none">불러오기</button>
+    </div>
+
+    <!-- 이름 입력 + 저장 + 기본 + 삭제 -->
+    <div class="recipe-action-row">
+      <input class="recipe-name-input" type="text" id="recipeNameInput" placeholder="레시피 이름 입력 후 저장">
+      <button class="recipe-save-btn" id="recipeSaveBtn">저장</button>
+      <button class="recipe-default-btn" id="recipeDefaultBtn" title="기본 레시피로 설정">기본</button>
+      <button class="recipe-del-btn" id="recipeDelBtn" title="선택한 레시피 삭제">×</button>
+    </div>
+    <div class="recipe-hint" id="recipeHint">
+      GitHub Gist 토큰을 설정하면 어디서든 레시피가 동기화됩니다.
+    </div>
+
+    <!-- 단계 설정 -->
+    <div class="section-label">단계 설정</div>
+    <div class="total-preview">
+      <span class="lbl">총 추출 시간</span>
+      <span class="val" id="totalPreview">—</span>
+    </div>
+    <div id="stepsEditor"></div>
+    <button class="add-btn" id="addBtn">+ 단계 추가</button>
+    <div class="btn-row">
+      <button class="btn-primary" id="startBtn">시작하기</button>
+      <button class="btn-secondary" id="resetDefaultBtn">기본값</button>
+    </div>
+  </div>
+
+  <!-- 타이머 패널 -->
+  <div id="timerPanel">
+    <div class="total-bar-header">
+      <span class="total-bar-lbl">전체 진행</span>
+      <span class="total-time-val" id="totalTimeVal">0 / 0초</span>
+    </div>
+    <div class="total-track"><div class="total-fill" id="totalFill" style="width:0%"></div></div>
+    <div class="step-track"><div class="step-fill" id="stepFill" style="width:0%"></div></div>
+
+    <div id="doneBanner" class="done-banner" style="display:none">
+      <div class="done-icon">☕</div>
+      <div class="done-title">추출 완료</div>
+      <div class="done-sub">맛있는 커피 드세요</div>
+      <div class="done-total" id="doneTotalTime"></div>
+    </div>
+
+    <div id="mainCard" class="main-card">
+      <div class="step-tag" id="stepTag">STEP 1</div>
+      <div class="step-title" id="stepTitle">—</div>
+      <div class="time-display" id="timeDisplay">00:00</div>
+      <div class="card-meta">
+        <div class="meta-item">
+          <div class="meta-lbl">단계 경과</div>
+          <div class="meta-val" id="stepElapsed">0s</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-lbl">총 경과</div>
+          <div class="meta-val hi" id="totalElapsedDisp">0s</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-lbl">총 추출</div>
+          <div class="meta-val" id="totalTimeDisp">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="voice-loading" id="voiceLoading">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <span>음성 생성 중</span>
+    </div>
+
+    <div class="next-card" id="nextCard">
+      <span class="lbl">다음 단계</span>
+      <span class="val" id="nextStep">—</span>
+    </div>
+
+    <div class="step-list" id="stepListMini"></div>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="pauseBtn">일시 정지</button>
+      <button class="btn-secondary" id="skipBtn">건너뛰기</button>
+      <button class="btn-secondary" id="stopBtn">중단</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- 토스트 -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── 기본 데이터 ── */
+const defaultSteps = [
+  {name:"뜸들이기",sec:30},{name:"1차 추출",sec:45},
+  {name:"2차 추출",sec:45},{name:"3차 추출",sec:40},{name:"완료 대기",sec:20}
+];
+let steps = JSON.parse(JSON.stringify(defaultSteps));
+let currentStep=0, remaining=0, timer=null, isPaused=false, totalElapsed=0;
+
+/* ── 저장된 설정 (실제 적용값) ── */
+let elKey     = localStorage.getItem("el_key") || "";
+let elVoice   = localStorage.getItem("el_voice") || "nPczCjzI2devNBz1zQrb";
+let voiceParams = JSON.parse(localStorage.getItem("voice_params") || "null") || {
+  stability:0.75, similarity:0.75, speed:0.95, style:0.10
+};
+// 임시 편집값 (설정 저장 전까지 실제 동작에 반영 안 됨)
+let draftParams = JSON.parse(JSON.stringify(voiceParams));
+let draftVoice  = elVoice;
+let draftKey    = elKey;
+let draftVoiceOn = true;
+let hasPending = false; // 미저장 변경 여부
+
+const EL_MODEL = "eleven_turbo_v2_5";
+const PREVIEW_TEXT = "안녕하세요. 여러분들께 더 편안한 커피생활을 위해 만들어진 웹페이지입니다.";
+
+/* ── DOM ── */
+const voiceToggle    = document.getElementById("voiceToggle");
+const editorPanel    = document.getElementById("editorPanel");
+const timerPanel     = document.getElementById("timerPanel");
+const stepsEditor    = document.getElementById("stepsEditor");
+const apiKeyInput    = document.getElementById("apiKeyInput");
+const apiSaveBtn     = document.getElementById("apiSaveBtn");
+const apiStatus      = document.getElementById("apiStatus");
+const apiStatusText  = document.getElementById("apiStatusText");
+const voiceLoading   = document.getElementById("voiceLoading");
+const voiceSelect    = document.getElementById("voiceSelect");
+const pauseBtn       = document.getElementById("pauseBtn");
+const settingsBtn    = document.getElementById("settingsBtn");
+const settingsPanel  = document.getElementById("settingsPanel");
+const recipeNameInput= document.getElementById("recipeNameInput");
+const recipeSaveBtn  = document.getElementById("recipeSaveBtn");
+const toastEl        = document.getElementById("toast");
+const pendingBadge   = document.getElementById("pendingBadge");
+const previewBtn     = document.getElementById("previewBtn");
+const previewBtnText = document.getElementById("previewBtnText");
+const settingsSaveBtn   = document.getElementById("settingsSaveBtn");
+const settingsCancelBtn = document.getElementById("settingsCancelBtn");
+
+/* ── 초기값 복원 ── */
+if (elKey) { apiKeyInput.value = elKey; setApiStatus("ok","연결됨 — ElevenLabs AI 음성 사용 중"); }
+voiceSelect.value = elVoice;
+
+// 슬라이더 초기값 세팅 (draftParams 기반 표시만, 저장 전 실제 미적용)
+["stability","similarity","speed","style"].forEach(k => {
+  const slider = document.getElementById(k+"Slider");
+  const valEl  = document.getElementById(k+"Val");
+  slider.value = draftParams[k];
+  valEl.textContent = Number(draftParams[k]).toFixed(2);
+  slider.addEventListener("input", () => {
+    draftParams[k] = parseFloat(slider.value);
+    valEl.textContent = draftParams[k].toFixed(2);
+    markPending();
+  });
+});
+
+// 보이스 변경 → draft만
+voiceSelect.addEventListener("change", () => {
+  draftVoice = voiceSelect.value;
+  markPending();
+});
+
+// 음성 토글 변경 → draft만
+voiceToggle.addEventListener("change", () => {
+  draftVoiceOn = voiceToggle.checked;
+  markPending();
+});
+
+function markPending() {
+  hasPending = true;
+  pendingBadge.classList.add("on");
+}
+function clearPending() {
+  hasPending = false;
+  pendingBadge.classList.remove("on");
+}
+
+/* ── 설정 패널 ── */
+settingsBtn.addEventListener("click", () => {
+  const open = settingsPanel.classList.toggle("open");
+  settingsBtn.classList.toggle("active", open);
+  // 패널 열 때 draft를 현재 저장값으로 리셋 (취소 시 되돌리기 위해)
+  if (open) {
+    draftParams = JSON.parse(JSON.stringify(voiceParams));
+    draftVoice  = elVoice;
+    draftKey    = elKey;
+    draftVoiceOn = voiceToggle.checked;
+    syncDraftToUI();
+    clearPending();
+  }
+});
+
+function syncDraftToUI() {
+  ["stability","similarity","speed","style"].forEach(k => {
+    document.getElementById(k+"Slider").value = draftParams[k];
+    document.getElementById(k+"Val").textContent = Number(draftParams[k]).toFixed(2);
+  });
+  voiceSelect.value = draftVoice;
+  apiKeyInput.value = draftKey;
+}
+
+/* ── 설정 저장 ── */
+settingsSaveBtn.addEventListener("click", async () => {
+  // API 키가 변경됐으면 검증 후 저장
+  const inputKey = apiKeyInput.value.trim();
+  if (inputKey && inputKey !== elKey) {
+    setApiStatus("","연결 확인 중...");
+    try {
+      const r = await fetch("https://api.elevenlabs.io/v1/user", {headers:{"xi-api-key":inputKey}});
+      if (r.ok) {
+        elKey = inputKey;
+        localStorage.setItem("el_key", elKey);
+        setApiStatus("ok","연결됨 — ElevenLabs AI 음성 사용 중");
+      } else { setApiStatus("err","API 키 연결 실패"); return; }
+    } catch { setApiStatus("err","연결 실패 — 저장하지 않았습니다"); return; }
+  }
+  // 나머지 값 적용
+  voiceParams  = JSON.parse(JSON.stringify(draftParams));
+  elVoice      = draftVoice;
+  localStorage.setItem("voice_params", JSON.stringify(voiceParams));
+  localStorage.setItem("el_voice", elVoice);
+  clearPending();
+  settingsPanel.classList.remove("open");
+  settingsBtn.classList.remove("active");
+  showToast("설정이 저장되었습니다");
+});
+
+/* ── 설정 취소 ── */
+settingsCancelBtn.addEventListener("click", () => {
+  // draft 되돌리기
+  draftParams  = JSON.parse(JSON.stringify(voiceParams));
+  draftVoice   = elVoice;
+  syncDraftToUI();
+  clearPending();
+  settingsPanel.classList.remove("open");
+  settingsBtn.classList.remove("active");
+});
+
+/* ── API 키 확인 버튼 (설정 저장과 별개로 연결만 확인) ── */
+apiSaveBtn.addEventListener("click", async () => {
+  const key = apiKeyInput.value.trim();
+  if (!key) return;
+  draftKey = key;
+  setApiStatus("","연결 확인 중...");
+  try {
+    const r = await fetch("https://api.elevenlabs.io/v1/user", {headers:{"xi-api-key":key}});
+    if (r.ok) { setApiStatus("ok","연결됨 — 설정 저장 버튼을 눌러야 최종 적용됩니다"); markPending(); }
+    else { throw new Error(); }
+  } catch { setApiStatus("err","연결 실패 — API 키를 확인해주세요"); }
+});
+
+function setApiStatus(state, msg) {
+  apiStatus.className = "api-status" + (state ? " "+state : "");
+  apiStatusText.textContent = msg;
+}
+
+/* ── 미리듣기 ── */
+let previewAudio = null;
+previewBtn.addEventListener("click", async () => {
+  if (!elKey && !draftKey) { showToast("API 키가 없습니다"); return; }
+  const key   = draftKey || elKey;
+  const voice = draftVoice || elVoice;
+  const p     = draftParams;
+
+  // 재생 중이면 중단
+  if (previewAudio) { previewAudio.pause(); previewAudio=null; resetPreviewBtn(); return; }
+
+  previewBtn.classList.add("loading");
+  previewBtnText.textContent = "음성 생성 중...";
+
+  try {
+    const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}/stream`, {
+      method:"POST",
+      headers:{"xi-api-key":key,"Content-Type":"application/json"},
+      body: JSON.stringify({
+        text: PREVIEW_TEXT,
+        model_id: EL_MODEL,
+        language_code: "ko",
+        voice_settings:{
+          stability: p.stability,
+          similarity_boost: p.similarity,
+          style: p.style,
+          use_speaker_boost: true,
+          speed: p.speed
+        }
+      })
+    });
+    if (!r.ok) throw new Error();
+    const blob = await r.blob();
+    const url  = URL.createObjectURL(blob);
+    previewAudio = new Audio(url);
+    previewBtn.classList.remove("loading");
+    previewBtnText.textContent = "▐▐  재생 중 (클릭 시 중단)";
+    previewAudio.onended = () => { URL.revokeObjectURL(url); previewAudio=null; resetPreviewBtn(); };
+    previewAudio.onerror = () => { resetPreviewBtn(); };
+    previewAudio.play();
+  } catch {
+    resetPreviewBtn();
+    showToast("미리듣기 실패 — API 키를 확인해주세요");
+  }
+});
+
+function resetPreviewBtn() {
+  previewBtn.classList.remove("loading");
+  previewBtnText.textContent = "현재 파라미터로 미리 듣기";
+  previewAudio = null;
+}
+
+/* ── 토스트 ── */
+let toastTimer;
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2200);
+}
+
+/* ── GitHub Gist 레시피 동기화 ── */
+const GIST_FILENAME = "handdrip-recipes.json";
+let gistToken = localStorage.getItem("gist_token") || "";
+let gistId    = localStorage.getItem("gist_id")    || "";
+let defaultRecipeName = localStorage.getItem("default_recipe") || "";
+
+const gistTokenInput = document.getElementById("gistTokenInput");
+const gistConnectBtn = document.getElementById("gistConnectBtn");
+const gistStatus     = document.getElementById("gistStatus");
+const gistStatusText = document.getElementById("gistStatusText");
+const gistSyncBar    = document.getElementById("gistSyncBar");
+const gistSyncText   = document.getElementById("gistSyncText");
+const recipeSelect   = document.getElementById("recipeSelect");
+const recipeLoadBtn  = document.getElementById("recipeLoadBtn");
+const recipeDefaultBtn = document.getElementById("recipeDefaultBtn");
+const recipeDelBtn   = document.getElementById("recipeDelBtn");
+
+// 초기 복원
+if (gistToken) {
+  gistTokenInput.value = gistToken;
+  setGistStatus("ok", `연결됨${gistId ? " — Gist ID: "+gistId.slice(0,8)+"…" : ""}`);
+}
+
+function setGistStatus(state, msg) {
+  gistStatus.className = "api-status" + (state ? " "+state : "");
+  gistStatusText.textContent = msg;
+}
+
+function showGistSync(msg) {
+  gistSyncBar.style.display = "flex";
+  gistSyncText.textContent = msg;
+}
+function hideGistSync() { gistSyncBar.style.display = "none"; }
+
+// Gist API 헬퍼
+async function gistGet() {
+  if (!gistToken) return null;
+  if (!gistId) {
+    const r = await fetch("https://api.github.com/gists", {
+      headers: { Authorization: `token ${gistToken}`, Accept: "application/vnd.github.v3+json" }
+    });
+    if (!r.ok) throw new Error("list_fail");
+    const list = await r.json();
+    const found = list.find(g => g.files && g.files[GIST_FILENAME]);
+    if (found) {
+      gistId = found.id;
+      localStorage.setItem("gist_id", gistId);
+      setGistStatus("ok", `연결됨 — Gist ID: ${gistId.slice(0,8)}…`);
+    } else return null;
+  }
+  const r = await fetch(`https://api.github.com/gists/${gistId}`, {
+    headers: { Authorization: `token ${gistToken}`, Accept: "application/vnd.github.v3+json" }
+  });
+  if (!r.ok) throw new Error("get_fail");
+  const data = await r.json();
+  const raw = data.files[GIST_FILENAME]?.content;
+  if (!raw) return null;
+  const parsed = JSON.parse(raw);
+  // 구버전 호환 (배열이면 그대로 recipes로)
+  return Array.isArray(parsed) ? { recipes: parsed, defaultRecipe: "" } : parsed;
+}
+
+async function gistSave(recipes, defRecipe) {
+  if (!gistToken) return;
+  const payload = { recipes, defaultRecipe: defRecipe ?? defaultRecipeName };
+  const body = JSON.stringify({
+    description: "Handdrip Timer Recipes",
+    public: false,
+    files: { [GIST_FILENAME]: { content: JSON.stringify(payload, null, 2) } }
+  });
+  if (gistId) {
+    await fetch(`https://api.github.com/gists/${gistId}`, {
+      method: "PATCH",
+      headers: { Authorization: `token ${gistToken}`, "Content-Type": "application/json" },
+      body
+    });
+  } else {
+    const r = await fetch("https://api.github.com/gists", {
+      method: "POST",
+      headers: { Authorization: `token ${gistToken}`, "Content-Type": "application/json" },
+      body
+    });
+    if (!r.ok) throw new Error("create_fail");
+    const data = await r.json();
+    gistId = data.id;
+    localStorage.setItem("gist_id", gistId);
+    setGistStatus("ok", `연결됨 — Gist ID: ${gistId.slice(0,8)}…`);
+  }
+}
+
+// 로컬 fallback
+function getLocalRecipes() { return JSON.parse(localStorage.getItem("recipes") || "[]"); }
+function setLocalRecipes(arr) { localStorage.setItem("recipes", JSON.stringify(arr)); }
+
+async function loadRecipes() {
+  if (gistToken) {
+    showGistSync("Gist에서 불러오는 중...");
+    try {
+      const data = await gistGet();
+      hideGistSync();
+      if (data) {
+        setLocalRecipes(data.recipes);
+        if (data.defaultRecipe) {
+          defaultRecipeName = data.defaultRecipe;
+          localStorage.setItem("default_recipe", defaultRecipeName);
+        }
+        return data.recipes;
+      }
+    } catch { hideGistSync(); }
+  }
+  return getLocalRecipes();
+}
+
+async function persistRecipes(arr, defRecipe) {
+  setLocalRecipes(arr);
+  if (gistToken) {
+    showGistSync("Gist에 저장 중...");
+    try { await gistSave(arr, defRecipe); hideGistSync(); }
+    catch { hideGistSync(); showToast("Gist 저장 실패 — 로컬에만 저장됨"); }
+  }
+}
+
+// 드롭다운 렌더
+async function renderRecipeSelect(recipes) {
+  if (!recipes) recipes = await loadRecipes();
+  recipeSelect.innerHTML = '<option value="">— 레시피 선택 —</option>';
+  recipes.forEach((r, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    const isDefault = r.name === defaultRecipeName;
+    opt.textContent = (isDefault ? "★ " : "") + r.name + "  (" + fmtSec(r.steps.reduce((a,s)=>a+s.sec,0)) + ")";
+    recipeSelect.appendChild(opt);
+  });
+  // 기본 레시피 표시 업데이트
+  updateDefaultBtn();
+  return recipes;
+}
+
+function updateDefaultBtn() {
+  const idx = parseInt(recipeSelect.value);
+  if (isNaN(idx)) { recipeDefaultBtn.classList.remove("is-default"); recipeDefaultBtn.title="기본 레시피로 설정"; return; }
+  const recipes = getLocalRecipes();
+  const name = recipes[idx]?.name;
+  const isDefault = name === defaultRecipeName;
+  recipeDefaultBtn.classList.toggle("is-default", isDefault);
+  recipeDefaultBtn.title = isDefault ? "현재 기본 레시피" : "기본 레시피로 설정";
+}
+
+recipeSelect.addEventListener("change", () => {
+  updateDefaultBtn();
+  const idx = parseInt(recipeSelect.value);
+  if (isNaN(idx)) return;
+  const recipes = getLocalRecipes();
+  const r = recipes[idx];
+  if (!r) return;
+  steps = JSON.parse(JSON.stringify(r.steps));
+  recipeNameInput.value = r.name;
+  renderEditor();
+  showToast(`'${r.name}' 불러옴`);
+});
+
+// 불러오기
+recipeLoadBtn.addEventListener("click", () => {
+  const idx = parseInt(recipeSelect.value);
+  if (isNaN(idx)) { showToast("레시피를 선택해주세요"); return; }
+  const recipes = getLocalRecipes();
+  const r = recipes[idx];
+  if (!r) return;
+  steps = JSON.parse(JSON.stringify(r.steps));
+  recipeNameInput.value = r.name;
+  renderEditor();
+  showToast(`'${r.name}' 불러옴`);
+});
+
+// 기본으로 설정
+recipeDefaultBtn.addEventListener("click", async () => {
+  const idx = parseInt(recipeSelect.value);
+  if (isNaN(idx)) { showToast("레시피를 선택해주세요"); return; }
+  const recipes = getLocalRecipes();
+  const r = recipes[idx];
+  if (!r) return;
+  if (defaultRecipeName === r.name) {
+    defaultRecipeName = "";
+    localStorage.removeItem("default_recipe");
+    showToast("기본 설정 해제됨");
+  } else {
+    defaultRecipeName = r.name;
+    localStorage.setItem("default_recipe", r.name);
+    showToast(`'${r.name}'을 기본 레시피로 설정`);
+  }
+  // Gist에도 즉시 반영
+  await persistRecipes(recipes, defaultRecipeName);
+  renderRecipeSelect(recipes);
+});
+
+// 저장
+recipeSaveBtn.addEventListener("click", async () => {
+  const name = recipeNameInput.value.trim();
+  if (!name) { showToast("레시피 이름을 입력해주세요"); return; }
+  const arr = getLocalRecipes();
+  const existing = arr.findIndex(r => r.name === name);
+  const recipe = { name, steps: JSON.parse(JSON.stringify(steps)) };
+  if (existing >= 0) { arr[existing] = recipe; showToast(`'${name}' 업데이트됨`); }
+  else { arr.unshift(recipe); showToast(`'${name}' 저장됨`); }
+  await persistRecipes(arr);
+  await renderRecipeSelect(arr);
+  // 방금 저장한 항목 선택
+  const newIdx = arr.findIndex(r => r.name === name);
+  if (newIdx >= 0) recipeSelect.value = newIdx;
+  updateDefaultBtn();
+});
+
+// 삭제
+recipeDelBtn.addEventListener("click", async () => {
+  const idx = parseInt(recipeSelect.value);
+  if (isNaN(idx)) { showToast("삭제할 레시피를 선택해주세요"); return; }
+  const arr = getLocalRecipes();
+  const name = arr[idx]?.name;
+  arr.splice(idx, 1);
+  if (defaultRecipeName === name) { defaultRecipeName=""; localStorage.removeItem("default_recipe"); }
+  await persistRecipes(arr);
+  await renderRecipeSelect(arr);
+  showToast(`'${name}' 삭제됨`);
+});
+
+// Gist 연결 버튼
+gistConnectBtn.addEventListener("click", async () => {
+  const token = gistTokenInput.value.trim();
+  if (!token) return;
+  setGistStatus("", "연결 확인 중...");
+  try {
+    const r = await fetch("https://api.github.com/user", {
+      headers: { Authorization: `token ${token}` }
+    });
+    if (!r.ok) throw new Error();
+    const user = await r.json();
+    // 임시 저장 (설정 저장 버튼 눌러야 최종 적용)
+    draftKey = token; // gist token도 draft에 보관
+    setGistStatus("ok", `GitHub @${user.login} 연결됨 — 설정 저장 버튼을 눌러 적용`);
+    markPending();
+    // 저장된 Gist 탐색
+    gistToken = token;
+    gistId = "";
+    localStorage.setItem("gist_token", token);
+    localStorage.removeItem("gist_id");
+    const recipes = await loadRecipes();
+    await renderRecipeSelect(recipes);
+    setGistStatus("ok", `GitHub @${user.login} 연결됨${gistId ? " — Gist 발견" : " — 첫 저장 시 새 Gist 생성"}`);
+  } catch {
+    setGistStatus("err", "연결 실패 — 토큰을 확인해주세요");
+  }
+});
+
+// 설정 저장 시 gist token도 반영
+const _origSaveBtn = settingsSaveBtn.onclick;
+settingsSaveBtn.addEventListener("click", () => {
+  const token = gistTokenInput.value.trim();
+  if (token) {
+    gistToken = token;
+    localStorage.setItem("gist_token", token);
+  }
+});
+
+// 앱 시작 시 레시피 불러오기 + 기본 레시피 자동 적용
+(async () => {
+  const recipes = await renderRecipeSelect();
+  // 기본 레시피 자동 로드
+  if (defaultRecipeName) {
+    const found = recipes.find(r => r.name === defaultRecipeName);
+    if (found) {
+      steps = JSON.parse(JSON.stringify(found.steps));
+      recipeNameInput.value = found.name;
+      renderEditor();
+    }
+  }
+  // hint 업데이트
+  const hint = document.getElementById("recipeHint");
+  if (gistToken) hint.textContent = "레시피가 GitHub Gist에 저장됩니다. 어디서든 자동 동기화됩니다.";
+  else hint.innerHTML = 'GitHub Gist 토큰을 설정하면 어디서든 레시피가 동기화됩니다. <br>토큰 없이도 이 기기에서는 정상 사용됩니다.';
+})();
+
+/* ── 한글 텍스트 변환 ── */
+const KO_NUM = ["영","일","이","삼","사","오","육","칠","팔","구"];
+const KO_ORD = {
+  "1차":"일차","2차":"이차","3차":"삼차","4차":"사차","5차":"오차",
+  "6차":"육차","7차":"칠차","8차":"팔차","9차":"구차",
+  "1단계":"일단계","2단계":"이단계","3단계":"삼단계",
+  "4단계":"사단계","5단계":"오단계","6단계":"육단계"
+};
+// 숫자+초 → 한글 (예: "30초" → "삼십 초")
+const KO_TENS = ["","","이십","삼십","사십","오십","육십","칠십","팔십","구십"];
+function numToKo(n) {
+  if (n < 10) return KO_NUM[n];
+  const t = Math.floor(n/10), u = n%10;
+  const ts = t===1 ? "십" : KO_TENS[t];
+  return ts + (u>0 ? " "+KO_NUM[u] : "");
+}
+function toSpeakText(raw) {
+  let t = raw;
+  // 서수 교체 (1차→일차 등)
+  Object.entries(KO_ORD).forEach(([k,v]) => { t = t.replaceAll(k, v); });
+  // "숫자초" → 한글+초  예: "45초" → "사십 오초"
+  t = t.replace(/(\d+)초/g, (_,n) => numToKo(parseInt(n))+"초");
+  // 남은 단독 숫자 (카운트다운 3,2,1)
+  t = t.replace(/\b(\d)\b/g, (_,n) => KO_NUM[parseInt(n)]);
+  return t;
+}
+
+/* ── 오디오 프리페치 캐시 ── */
+// key: speak text → {url, blob} 미리 생성해 두는 캐시
+const audioCache = new Map();
+let prefetchController = null;
+
+async function fetchAudio(text) {
+  if (audioCache.has(text)) return audioCache.get(text);
+  const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${elVoice}/stream`, {
+    method:"POST",
+    headers:{"xi-api-key":elKey,"Content-Type":"application/json"},
+    body: JSON.stringify({
+      text,
+      model_id: EL_MODEL,
+      language_code: "ko",
+      voice_settings:{
+        stability: voiceParams.stability,
+        similarity_boost: voiceParams.similarity,
+        style: voiceParams.style,
+        use_speaker_boost: true,
+        speed: voiceParams.speed
+      }
+    })
+  });
+  if (!r.ok) throw new Error("fetch_fail");
+  const blob = await r.blob();
+  const url  = URL.createObjectURL(blob);
+  audioCache.set(text, url);
+  return url;
+}
+
+// 다음 단계 + 카운트다운 텍스트들을 백그라운드에서 미리 가져오기
+async function prefetchNextStep(stepIdx) {
+  if (!elKey) return;
+  const texts = [];
+  if (stepIdx < steps.length) {
+    const s = steps[stepIdx];
+    texts.push(toSpeakText(`${s.name}. ${s.sec}초`));
+  }
+  texts.push("three", "two", "one");
+  texts.push(toSpeakText("추출 완료. 맛있는 커피 드세요."));
+  for (const t of texts) {
+    if (!audioCache.has(t)) {
+      try { await fetchAudio(t); } catch {}
+    }
+  }
+}
+
+function clearAudioCache() {
+  audioCache.forEach(url => URL.revokeObjectURL(url));
+  audioCache.clear();
+}
+
+/* ── 음성 큐 ── */
+let audioQueue=[], isPlayingAudio=false;
+
+function speak(raw) {
+  if (!voiceToggle.checked) return;
+  const text = toSpeakText(raw);
+  audioQueue.push(text);
+  if (!isPlayingAudio) processQueue();
+}
+
+async function processQueue() {
+  if (!audioQueue.length) { isPlayingAudio=false; return; }
+  isPlayingAudio = true;
+  const text = audioQueue.shift();
+  if (elKey) {
+    try {
+      // 캐시에 있으면 즉시 재생, 없으면 로딩 표시 후 fetch
+      let url;
+      if (audioCache.has(text)) {
+        url = audioCache.get(text);
+      } else {
+        voiceLoading.classList.add("on");
+        url = await fetchAudio(text);
+        voiceLoading.classList.remove("on");
+      }
+      const a = new Audio(url);
+      a.onended = () => processQueue();
+      a.onerror = () => processQueue();
+      a.play();
+      return;
+    } catch { voiceLoading.classList.remove("on"); }
+  }
+  // 폴백: Web Speech API
+  if (!window.speechSynthesis) { processQueue(); return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang="ko-KR"; u.rate=voiceParams.speed;
+  u.onend = ()=>processQueue(); u.onerror = ()=>processQueue();
+  window.speechSynthesis.speak(u);
+}
+
+/* ── 헬퍼 ── */
+function fmt(s){ return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`; }
+function fmtSec(s){ if(s<60)return `${s}초`; const m=Math.floor(s/60),r=s%60; return r===0?`${m}분`:`${m}분 ${r}초`; }
+function totalSec(){ return steps.reduce((a,s)=>a+s.sec,0); }
+
+/* ── 편집기 ── */
+function renderEditor() {
+  stepsEditor.innerHTML="";
+  steps.forEach((s,i)=>{
+    const row=document.createElement("div"); row.className="step-row";
+    row.innerHTML=`
+      <span class="step-idx">${i+1}</span>
+      <input class="step-name-input" type="text" placeholder="단계 이름" value="${s.name}">
+      <input class="step-sec-input" type="number" min="1" max="999" value="${s.sec}">
+      <span class="sec-lbl">초</span>
+      <button class="del-btn">×</button>
+    `;
+    row.querySelector(".step-name-input").addEventListener("input",e=>{steps[i].name=e.target.value;});
+    row.querySelector(".step-sec-input").addEventListener("input",e=>{
+      steps[i].sec=Math.max(1,parseInt(e.target.value)||1); updateTotalPreview();
+    });
+    row.querySelector(".del-btn").addEventListener("click",()=>{
+      if(steps.length>1){steps.splice(i,1);renderEditor();}
+    });
+    stepsEditor.appendChild(row);
+  });
+  updateTotalPreview();
+}
+function updateTotalPreview(){ document.getElementById("totalPreview").textContent=fmtSec(totalSec()); }
+
+document.getElementById("addBtn").addEventListener("click",()=>{steps.push({name:"새 단계",sec:30});renderEditor();});
+document.getElementById("resetDefaultBtn").addEventListener("click",()=>{steps=JSON.parse(JSON.stringify(defaultSteps));renderEditor();});
+
+/* ── 타이머 UI ── */
+function renderMini(){
+  const el=document.getElementById("stepListMini"); el.innerHTML="";
+  steps.forEach((s,i)=>{
+    const d=document.createElement("div");
+    d.className="step-mini"+(i<currentStep?" done":i===currentStep?" current":"");
+    d.innerHTML=`<div class="dot"></div><span>${s.name}</span><span class="step-mini-time">${s.sec}s</span>`;
+    el.appendChild(d);
+  });
+}
+
+function updateUI(){
+  const s=steps[currentStep]; const total=totalSec(); const stepEl=s.sec-remaining;
+  document.getElementById("stepTag").textContent=`STEP ${currentStep+1} / ${steps.length}`;
+  document.getElementById("stepTitle").textContent=s.name;
+  document.getElementById("timeDisplay").textContent=fmt(remaining);
+  document.getElementById("timeDisplay").classList.toggle("urgent",remaining<=5&&remaining>0);
+  document.getElementById("stepFill").style.width=((stepEl/s.sec)*100)+"%";
+  document.getElementById("totalFill").style.width=((totalElapsed/total)*100)+"%";
+  document.getElementById("totalTimeVal").textContent=`${totalElapsed} / ${total}초`;
+  document.getElementById("stepElapsed").textContent=`${stepEl}s`;
+  document.getElementById("totalElapsedDisp").textContent=`${totalElapsed}s`;
+  document.getElementById("totalTimeDisp").textContent=fmtSec(total);
+  const next=steps[currentStep+1];
+  document.getElementById("nextStep").textContent=next?`${next.name} (${next.sec}초)`:"없음";
+  renderMini();
+}
+
+function startStep(i){
+  currentStep=i; remaining=steps[i].sec;
+  document.getElementById("doneBanner").style.display="none";
+  document.getElementById("mainCard").style.display="";
+  document.getElementById("nextCard").style.display="";
+  speak(`${steps[i].name}. ${steps[i].sec}초`);
+  updateUI();
+  // 다음 단계 + 카운트다운 미리 가져오기 (백그라운드)
+  prefetchNextStep(i+1);
+  clearInterval(timer);
+  timer=setInterval(()=>{
+    if(isPaused)return;
+    remaining--; totalElapsed++;
+    if(remaining===3) speak("three");
+    else if(remaining===2) speak("two");
+    else if(remaining===1) speak("one");
+    if(remaining<=0){
+      clearInterval(timer);
+      if(currentStep+1<steps.length){setTimeout(()=>startStep(currentStep+1),400);}
+      else finishAll();
+      return;
+    }
+    updateUI();
+  },1000);
+}
+
+function finishAll(){
+  clearInterval(timer);
+  document.getElementById("totalFill").style.width="100%";
+  document.getElementById("mainCard").style.display="none";
+  document.getElementById("nextCard").style.display="none";
+  document.getElementById("doneBanner").style.display="block";
+  document.getElementById("doneTotalTime").textContent=`총 추출 시간  ${fmtSec(totalSec())}`;
+  renderMini();
+  speak("추출 완료. 맛있는 커피 드세요.");
+  pauseBtn.textContent="처음으로"; isPaused=false;
+}
+
+function stopTimer(){
+  clearInterval(timer);
+  audioQueue=[]; isPlayingAudio=false;
+  voiceLoading.classList.remove("on");
+  clearAudioCache();
+  timerPanel.classList.remove("active");
+  editorPanel.style.display="";
+  isPaused=false; currentStep=0; remaining=0; totalElapsed=0;
+  pauseBtn.textContent="일시 정지";
+}
+
+document.getElementById("startBtn").addEventListener("click",()=>{
+  settingsPanel.classList.remove("open"); settingsBtn.classList.remove("active");
+  editorPanel.style.display="none";
+  timerPanel.classList.add("active");
+  totalElapsed=0; isPaused=false; pauseBtn.textContent="일시 정지";
+  clearAudioCache();
+  // 첫 단계 + 그 다음 단계 미리 가져오기
+  if (elKey) prefetchNextStep(0);
+  startStep(0);
+});
+pauseBtn.addEventListener("click",()=>{
+  if(pauseBtn.textContent==="처음으로"){stopTimer();return;}
+  isPaused=!isPaused;
+  pauseBtn.textContent=isPaused?"재개":"일시 정지";
+  if(!isPaused)speak("재개");
+});
+document.getElementById("skipBtn").addEventListener("click",()=>{
+  clearInterval(timer);
+  if(currentStep+1<steps.length){totalElapsed+=remaining;setTimeout(()=>startStep(currentStep+1),300);}
+  else finishAll();
+});
+document.getElementById("stopBtn").addEventListener("click",stopTimer);
+
+/* ── 초기 렌더 ── */
+renderEditor();
+</script>
+</body>
+</html>
