@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>핸드드립 타이머</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* --- 테마 --- */
+:root{
+  --bg:#0e0e0e;--surface:#161616;--surface2:#1e1e1e;
+  --border:#2a2a2a;--border-hi:#3c3c3c;
+  --accent:#c8a96e;--accent2:#e8c990;
+  --text:#f0ede8;--muted:#666;
+  --danger:#e05a4a;--success:#5ab870;--radius:8px;
+}
+[data-theme="light"]{--bg:#f5f0eb;--surface:#fff;--surface2:#f0ebe4;--border:#e0d8cf;--border-hi:#c8bfb5;--accent:#8b6339;--accent2:#a07845;--text:#2a1f14;--muted:#8a7a6a;}
+[data-theme="sky"]{--bg:#e8f4fb;--surface:#fff;--surface2:#d4ecf7;--border:#b8d9ee;--border-hi:#8fc4e0;--accent:#1a7abf;--accent2:#2890d5;--text:#0d2b3e;--muted:#5a8aaa;}
+[data-theme="forest"]{--bg:#0d1a0f;--surface:#142016;--surface2:#1c2e1e;--border:#2a3d2c;--border-hi:#3d5c3f;--accent:#6ab87a;--accent2:#85cc94;--text:#e0f0e3;--muted:#5a7d5e;}
+[data-theme="purple"]{--bg:#0f0d1a;--surface:#171525;--surface2:#201d30;--border:#302b48;--border-hi:#453e64;--accent:#9b7ee8;--accent2:#b09cf0;--text:#ede8ff;--muted:#6b6090;}
+[data-theme="rose"]{--bg:#1a0d0f;--surface:#251318;--surface2:#301820;--border:#48282f;--border-hi:#643840;--accent:#e87a8a;--accent2:#f09aa7;--text:#ffe8eb;--muted:#8a5560;}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+
+/* --- 모바일: 전체화면 --- */
+html,body{height:100%;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;}
+.app-wrap{display:flex;flex-direction:column;flex:1;overflow:hidden;}
+
+/* --- 데스크탑: 중앙 카드 --- */
+@media(min-width:700px){
+  html,body{height:auto;overflow:auto;}
+  body{min-height:100vh;height:auto;align-items:center;justify-content:center;padding:32px 20px 60px;}
+  .app-wrap{width:100%;max-width:460px;border:1px solid var(--border);border-radius:14px;overflow:visible;flex:none;height:auto;}
+  .header{border-radius:14px 14px 0 0;}
+  .main{overflow:visible;height:auto;}
+  #homePanel{overflow:visible;height:auto;padding:16px 0;}
+  .step-cards{overflow:visible;height:auto;max-height:none;padding-bottom:0;margin-bottom:16px;}
+  #timerPanel{height:auto;overflow:visible;padding:16px 0;}
+  .step-list-mini{overflow:visible;height:auto;max-height:none;}
+  .modal-box{border-radius:14px;max-width:480px;}
+  .modal-overlay{align-items:center;}
+}
+
+/* --- 헤더 --- */
+.header-recipe-select{
+  background:transparent;border:none;border-bottom:1px solid var(--border);
+  color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;
+  padding:2px 18px 2px 0;outline:none;cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 2px center;
+  max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:border-color .15s;
+}
+.header-recipe-select:focus{border-bottom-color:var(--accent);}
+.header-recipe-select option{background:var(--surface);color:var(--text);}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--surface);}
+.header-left{display:flex;align-items:center;gap:10px;}
+.logo{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;color:var(--accent);text-transform:uppercase;}
+.header-right{display:flex;gap:8px;}
+.icon-btn{width:34px;height:34px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s,color .15s;flex-shrink:0;}
+.icon-btn:hover{border-color:var(--border-hi);color:var(--text);}
+.icon-btn.active{border-color:var(--accent);color:var(--accent);}
+.icon-btn svg{width:15px;height:15px;}
+.card-edit-btn{width:22px;height:22px;border:none;background:none;color:var(--muted);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:4px;transition:color .15s,background .15s;opacity:0;margin-left:4px;}
+.step-card:hover .card-edit-btn{opacity:1;}
+.step-card.editing .card-edit-btn{opacity:1;color:var(--accent);}
+.card-edit-btn:hover{background:var(--surface2);color:var(--text);}
+.card-edit-btn svg{width:12px;height:12px;}
+
+/* --- 메인 --- */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:0 16px;background:var(--bg);}
+
+/* --- 홈 --- */
+#homePanel{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:12px 0;}
+.step-cards{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-bottom:8px;}
+.step-cards::-webkit-scrollbar{width:3px;}
+.step-cards::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:3px;}
+
+/* 단계 카드 */
+.step-card{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);transition:border-color .15s;cursor:pointer;}
+.step-card:hover{border-color:var(--border-hi);}
+.step-card.editing{border-color:var(--accent);cursor:default;}
+.step-card-view{display:flex;align-items:center;gap:12px;padding:11px 14px;}
+.step-card-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);width:18px;text-align:right;flex-shrink:0;}
+.step-card-name{flex:1;font-size:14px;font-weight:300;}
+.step-card-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.step-card-time{font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);flex-shrink:0;}
+.step-card.zero-sec .step-card-time{color:var(--accent);font-size:11px;}
+
+/* 인라인 편집 영역 */
+.step-card-edit{display:none;padding:10px 14px 12px;border-top:1px solid var(--border);gap:8px;align-items:center;}
+.step-card.editing .step-card-edit{display:flex;}
+.step-card-edit input[type=text]{
+  flex:1;min-width:80px;background:var(--surface2);border:1px solid var(--border-hi);
+  border-radius:6px;color:var(--text);font-family:'Noto Sans KR',sans-serif;
+  font-size:13px;padding:7px 10px;outline:none;transition:border-color .15s;
+}
+.step-card-edit input[type=text]:focus{border-color:var(--accent);}
+.step-card-edit input[type=number]{
+  width:54px;background:var(--surface2);border:1px solid var(--border-hi);
+  border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;
+  font-size:13px;padding:7px 8px;outline:none;text-align:center;transition:border-color .15s;
+}
+.step-card-edit input[type=number]:focus{border-color:var(--accent);}
+.sec-lbl-sm{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);flex-shrink:0;}
+.card-save-btn{
+  padding:7px 14px;border-radius:6px;
+  border:1px solid var(--accent);background:var(--accent);
+  color:#0e0e0e;font-family:'Noto Sans KR',sans-serif;
+  font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;
+  transition:background .15s;flex-shrink:0;
+}
+.card-save-btn:hover{background:var(--accent2);}
+
+/* 홈 하단 */
+.home-footer{flex-shrink:0;padding:10px 0 12px;}
+.total-info{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface);border-radius:var(--radius);margin-bottom:10px;}
+.total-info .lbl{font-size:11px;color:var(--muted);}
+.total-info .val{font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);}
+
+/* --- 타이머 --- */
+#timerPanel{flex:1;display:none;flex-direction:column;overflow:hidden;padding:10px 0;}
+#timerPanel.active{display:flex;}
+.progress-wrap{flex-shrink:0;margin-bottom:8px;}
+.progress-labels{display:flex;justify-content:space-between;margin-bottom:4px;}
+.progress-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.progress-val{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);}
+.progress-track{height:3px;background:var(--border);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 1s linear;}
+.step-track{height:2px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:4px;}
+.step-fill{height:100%;background:rgba(200,169,110,.35);border-radius:2px;transition:width 1s linear;}
+.main-card{flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 16px 14px;text-align:center;margin-bottom:10px;}
+.step-tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--accent);text-transform:uppercase;margin-bottom:6px;}
+.step-title-timer{font-size:clamp(15px, calc(2.2dvh * var(--start-btn-size, 1)), 36px);font-weight:300;margin-bottom:12px;transition:font-size .3s, color .3s;}
+.time-display{font-family:'DM Mono',monospace;font-weight:300;letter-spacing:-.02em;line-height:1;margin-bottom:12px;color:var(--text);transition:color .3s;font-size:clamp(36px, calc(10dvh * var(--start-btn-size, 1)), 120px);}
+.time-display.urgent{color:var(--danger);}
+.card-meta{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border);padding-top:10px;gap:4px;}
+.meta-item{text-align:center;}
+.meta-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:3px;}
+.meta-val{font-family:'DM Mono',monospace;font-size:13px;color:var(--text);}
+.meta-val.hi{color:var(--accent);}
+.voice-loading{display:none;align-items:center;gap:6px;justify-content:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);height:18px;margin-bottom:4px;}
+.voice-loading.on{display:flex;}
+.dots{display:flex;gap:3px;}
+.dots span{width:4px;height:4px;border-radius:50%;background:var(--accent);animation:bop .8s infinite;}
+.dots span:nth-child(2){animation-delay:.15s;}
+.dots span:nth-child(3){animation-delay:.3s;}
+@keyframes bop{0%,80%,100%{transform:translateY(0);opacity:.3;}40%{transform:translateY(-4px);opacity:1;}}
+.next-card{flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.next-card .lbl{font-size:11px;color:var(--muted);}
+.next-card .val{font-size:13px;color:var(--text);}
+.step-list-mini{flex:1;overflow-y:auto;margin-bottom:10px;}
+.step-list-mini::-webkit-scrollbar{width:3px;}
+.step-list-mini::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:3px;}
+.step-mini{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:12px;color:#3a3a3a;border-bottom:1px solid var(--border);}
+.step-mini:last-child{border-bottom:none;}
+.step-mini.done{color:#2e2e2e;}
+.step-mini.done .dot{background:#2e2e2e;}
+.step-mini.current{color:var(--text);}
+.step-mini.current .dot{background:var(--accent);}
+.dot{width:5px;height:5px;border-radius:50%;background:#333;flex-shrink:0;}
+.step-mini-time{margin-left:auto;font-family:'DM Mono',monospace;font-size:11px;color:inherit;}
+.done-banner{text-align:center;padding:20px 0 10px;flex-shrink:0;}
+.done-icon{font-size:30px;margin-bottom:8px;}
+.done-title{font-size:20px;font-weight:300;margin-bottom:4px;}
+.done-sub{font-size:12px;color:var(--muted);}
+.done-total{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);margin-top:8px;}
+
+/* --- 버튼 --- */
+.btn-row{display:flex;gap:8px;flex-shrink:0;padding-bottom:4px;}
+.btn-primary{flex:1;padding:11px;border-radius:var(--radius);border:1px solid var(--accent);background:var(--accent);color:#0e0e0e;font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:background .15s,transform .1s;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-primary:active{transform:scale(.98);}
+.btn-secondary{padding:11px 14px;border-radius:var(--radius);border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;transition:border-color .15s,color .15s;}
+.btn-secondary:hover{border-color:var(--muted);color:var(--text);}
+/* 시작하기 버튼 — 화면 비율 기반 + 설정 가능 */
+:root{--start-btn-size:1;}
+#startBtn{
+  padding:clamp(16px, calc(5dvh * var(--start-btn-size)), 120px) 11px;
+  font-size:clamp(14px, calc(2.5dvh * var(--start-btn-size)), 48px);
+  border-radius:clamp(10px, calc(1.5dvh * var(--start-btn-size)), 28px);
+  letter-spacing:.02em;
+}
+/* 타이머 버튼들도 비례 확대 */
+#timerPanel .btn-primary{
+  padding:clamp(10px, calc(2.5dvh * var(--start-btn-size)), 60px) 11px;
+  font-size:clamp(13px, calc(1.8dvh * var(--start-btn-size)), 36px);
+}
+#timerPanel .btn-secondary{
+  padding:clamp(10px, calc(2.5dvh * var(--start-btn-size)), 60px) clamp(12px, calc(2dvh * var(--start-btn-size)), 36px);
+  font-size:clamp(12px, calc(1.6dvh * var(--start-btn-size)), 32px);
+}
+@media(min-width:700px){
+  #startBtn{padding:clamp(12px, calc(2vh * var(--start-btn-size)), 40px) 11px;font-size:clamp(14px, calc(1.5vh * var(--start-btn-size)), 24px);border-radius:var(--radius);}
+  #timerPanel .btn-primary{padding:clamp(10px, calc(1.5vh * var(--start-btn-size)), 28px) 11px;font-size:clamp(13px, calc(1.2vh * var(--start-btn-size)), 20px);}
+  #timerPanel .btn-secondary{padding:clamp(10px, calc(1.5vh * var(--start-btn-size)), 28px) 14px;font-size:clamp(12px, calc(1.1vh * var(--start-btn-size)), 18px);}
+}
+/* 단계 텍스트 강조 애니메이션 */
+.step-title-timer.highlight{
+  font-size:clamp(18px,5vw,24px);
+  font-weight:500;
+  color:var(--accent);
+  animation:textPop .5s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes textPop{from{transform:scale(.9);opacity:.5;}to{transform:scale(1);opacity:1;}}
+
+/* --- 모달 공통 --- */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(2px);}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:520px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.modal-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;}
+.modal-badge{font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(200,169,110,.15);color:var(--accent);margin-left:8px;display:none;}
+.modal-badge.on{display:inline;}
+.modal-close{width:28px;height:28px;border:none;background:none;color:var(--muted);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;border-radius:4px;transition:color .15s;}
+.modal-close:hover{color:var(--text);}
+.modal-body{flex:1;overflow-y:auto;padding:14px 16px;}
+.modal-body::-webkit-scrollbar{width:3px;}
+.modal-body::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:3px;}
+.modal-footer{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;}
+
+/* --- 레시피 모달 --- */
+.section-lbl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;margin-top:14px;}
+.section-lbl:first-child{margin-top:0;}
+.recipe-select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;padding:8px 10px;outline:none;cursor:pointer;margin-bottom:8px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+.recipe-select:focus{border-color:var(--accent);}
+.recipe-action-row{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;}
+.recipe-name-input{flex:1;min-width:100px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;padding:8px 10px;outline:none;}
+.recipe-name-input:focus{border-color:var(--accent);}
+.recipe-name-input::placeholder{color:#3a3a3a;}
+.btn-sm{padding:8px 12px;border-radius:var(--radius);font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;white-space:nowrap;transition:border-color .15s,color .15s,background .15s;}
+.btn-sm-accent{border:1px solid var(--accent);background:transparent;color:var(--accent);}
+.btn-sm-accent:hover{background:rgba(200,169,110,.1);}
+.btn-sm-muted{border:1px solid var(--border);background:transparent;color:var(--muted);}
+.btn-sm-muted.on{border-color:var(--success);color:var(--success);}
+.btn-sm-muted:hover{border-color:var(--muted);color:var(--text);}
+.btn-sm-danger{border:1px solid var(--border);background:transparent;color:var(--muted);}
+.btn-sm-danger:hover{border-color:var(--danger);color:var(--danger);}
+.recipe-hint{font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6;}
+.total-preview{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface2);border-radius:var(--radius);margin-bottom:10px;}
+.total-preview .lbl{font-size:12px;color:var(--muted);}
+.total-preview .val{font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);}
+.step-row{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:9px 10px;margin-bottom:6px;transition:border-color .15s;}
+.step-row:hover{border-color:var(--border-hi);}
+.step-idx{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);width:16px;text-align:right;flex-shrink:0;}
+.step-name-input{flex:1;background:transparent;border:none;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:300;outline:none;}
+.step-name-input::placeholder{color:#3a3a3a;}
+.step-sec-input{width:46px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;text-align:center;padding:4px 5px;outline:none;}
+.step-sec-input:focus{border-color:var(--accent);}
+.sec-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);flex-shrink:0;}
+.del-btn{width:20px;height:20px;border:none;background:none;color:#3a3a3a;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;border-radius:4px;flex-shrink:0;transition:color .15s;}
+.del-btn:hover{color:var(--danger);}
+.add-step-btn{width:100%;border:1px dashed var(--border);background:none;color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:13px;padding:8px;border-radius:var(--radius);cursor:pointer;transition:border-color .15s,color .15s;margin-top:2px;}
+.add-step-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* --- 설정 모달 --- */
+.setting-row{padding:11px 0;border-bottom:1px solid var(--border);}
+.setting-row:last-child{border-bottom:none;padding-bottom:0;}
+.setting-row:first-child{padding-top:0;}
+.setting-head{display:flex;align-items:center;justify-content:space-between;}
+.setting-label{font-size:13px;color:var(--text);}
+.setting-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.slider-sw{position:absolute;inset:0;background:var(--border);border-radius:20px;cursor:pointer;transition:background .2s;}
+.slider-sw::before{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .2s;}
+.toggle input:checked+.slider-sw{background:var(--accent);}
+.toggle input:checked+.slider-sw::before{transform:translateX(16px);}
+.api-row{display:flex;gap:8px;margin-top:8px;margin-bottom:6px;}
+.api-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:7px 10px;outline:none;transition:border-color .15s;}
+.api-input:focus{border-color:var(--accent);}
+.api-input::placeholder{color:#3a3a3a;}
+.api-btn{padding:7px 12px;border-radius:5px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;white-space:nowrap;transition:background .15s;}
+.api-btn:hover{background:rgba(200,169,110,.1);}
+.status-row{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.status-row.ok{color:var(--success);}
+.status-row.err{color:var(--danger);}
+.status-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.voice-select-wrap{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:12px;padding:7px 10px;outline:none;cursor:pointer;margin-top:8px;}
+.sliders-grid{display:grid;gap:10px;margin-top:10px;}
+.slider-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+.slider-name{font-size:12px;color:var(--muted);}
+.slider-val{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);}
+input[type=range]{width:100%;-webkit-appearance:none;height:3px;background:var(--border);border-radius:3px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);border:none;}
+.collapsible-head{display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.collapse-arrow{font-size:11px;color:var(--muted);transition:transform .2s;display:inline-block;}
+.preview-btn{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;padding:8px 12px;border-radius:var(--radius);border:1px solid var(--border-hi);background:var(--surface2);color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;transition:border-color .15s,color .15s;}
+.preview-btn:hover{border-color:var(--accent);color:var(--accent);}
+.preview-btn svg{width:13px;height:13px;flex-shrink:0;}
+.preview-dots{display:none;gap:3px;margin-left:auto;}
+.preview-btn.loading .preview-dots{display:flex;}
+.theme-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.theme-btn{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;transition:border-color .15s,color .15s;}
+.theme-btn:hover,.theme-btn.active{border-color:var(--accent);color:var(--text);}
+.theme-swatch{width:13px;height:13px;border-radius:50%;border:2px solid transparent;flex-shrink:0;}
+.sync-bar{display:none;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:8px;}
+.sync-bar.on{display:flex;}
+.settings-footer{display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--border);margin-top:4px;}
+.settings-save{flex:1;padding:10px;border-radius:var(--radius);border:1px solid var(--accent);background:var(--accent);color:#0e0e0e;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background .15s;}
+.settings-save:hover{background:var(--accent2);}
+.settings-cancel{padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;}
+.export-row{display:flex;gap:8px;margin-top:10px;}
+
+/* --- 추출 완료 오버레이 --- */
+.done-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.7);z-index:300;
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);cursor:pointer;
+}
+.done-overlay.open{display:flex;}
+.done-popup{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:36px 28px 28px;
+  text-align:center;width:90%;max-width:320px;
+  pointer-events:none;
+  animation:popIn .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn{from{transform:scale(.85);opacity:0;}to{transform:scale(1);opacity:1;}}
+.done-popup-icon{font-size:44px;margin-bottom:14px;}
+.done-popup-title{font-size:22px;font-weight:300;margin-bottom:6px;}
+.done-popup-sub{font-size:14px;color:var(--muted);margin-bottom:10px;}
+.done-popup-time{font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);margin-bottom:20px;}
+.done-popup-hint{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.08em;}
+
+/* --- 토스트 --- */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 16px;font-size:13px;color:var(--text);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap;z-index:999;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="app-wrap">
+
+<!-- 헤더 -->
+<div class="header">
+  <div class="header-left">
+    <span class="logo">Drip</span>
+    <select class="header-recipe-select" id="headerRecipeSelect">
+      <option value="">레시피 없음</option>
+    </select>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn" id="recipeBtn" title="레시피 편집">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </button>
+    <button class="icon-btn" id="settingsBtn" title="설정">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- 메인 -->
+<div class="main">
+
+  <!-- 홈 -->
+  <div id="homePanel">
+    <div class="step-cards" id="stepCards"></div>
+    <div class="home-footer">
+      <div class="total-info">
+        <span class="lbl">총 추출 시간</span>
+        <span class="val" id="homeTotalTime">-</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" id="startBtn">시작하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 타이머 -->
+  <div id="timerPanel">
+    <div class="progress-wrap">
+      <div class="progress-labels">
+        <span class="progress-lbl">전체 진행</span>
+        <span class="progress-val" id="totalTimeVal">0 / 0초</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="totalFill" style="width:0%"></div></div>
+      <div class="step-track"><div class="step-fill" id="stepFill" style="width:0%"></div></div>
+    </div>
+    <div id="doneBanner" class="done-banner" style="display:none">
+      <div class="done-icon">☕</div>
+      <div class="done-title">추출 완료</div>
+      <div class="done-sub">맛있는 커피 드세요</div>
+      <div class="done-total" id="doneTotalTime"></div>
+    </div>
+    <div id="mainCard" class="main-card">
+      <div class="step-tag" id="stepTag">STEP 1</div>
+      <div class="step-title-timer" id="stepTitle">-</div>
+      <div class="time-display" id="timeDisplay">00:00</div>
+      <div class="card-meta">
+        <div class="meta-item"><div class="meta-lbl">단계 경과</div><div class="meta-val" id="stepElapsed">0s</div></div>
+        <div class="meta-item"><div class="meta-lbl">총 경과</div><div class="meta-val hi" id="totalElapsedDisp">0s</div></div>
+        <div class="meta-item"><div class="meta-lbl">총 추출</div><div class="meta-val" id="totalTimeDisp">-</div></div>
+      </div>
+    </div>
+    <div class="voice-loading" id="voiceLoading"><div class="dots"><span></span><span></span><span></span></div><span>음성 생성 중</span></div>
+    <div class="next-card" id="nextCard"><span class="lbl">다음 단계</span><span class="val" id="nextStep">-</span></div>
+    <div class="step-list-mini" id="stepListMini"></div>
+    <div class="btn-row">
+      <button class="btn-primary" id="pauseBtn">일시 정지</button>
+      <button class="btn-secondary" id="skipBtn">건너뛰기</button>
+      <button class="btn-secondary" id="stopBtn">중단</button>
+    </div>
+  </div>
+
+</div>
+</div><!-- /app-wrap -->
+
+<!-- 추출 완료 오버레이 -->
+<div class="done-overlay" id="doneOverlay">
+  <div class="done-popup">
+    <div class="done-popup-icon">☕</div>
+    <div class="done-popup-title">추출 완료</div>
+    <div class="done-popup-sub">맛있는 커피 드세요</div>
+    <div class="done-popup-time" id="donePopupTime"></div>
+    <div class="done-popup-hint">화면을 탭하면 닫힙니다</div>
+  </div>
+</div>
+
+<!-- 레시피 모달 -->
+<div class="modal-overlay" id="recipeModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div><span class="modal-title">레시피</span><span class="modal-badge" id="recipeBadge">미저장</span></div>
+      <button class="modal-close" id="recipeClose">x</button>
+    </div>
+    <div class="modal-body">
+      <div class="sync-bar" id="syncBar"><div class="dots"><span></span><span></span><span></span></div><span id="syncText">동기화 중...</span></div>
+      <div class="section-lbl">레시피 선택</div>
+      <select class="recipe-select" id="recipeSelect"><option value="">- 레시피 선택 -</option></select>
+      <div class="recipe-action-row">
+        <input class="recipe-name-input" type="text" id="recipeNameInput" placeholder="레시피 이름">
+        <button class="btn-sm btn-sm-accent" id="recipeSaveBtn">저장</button>
+        <button class="btn-sm btn-sm-muted" id="recipeDefaultBtn">기본</button>
+        <button class="btn-sm btn-sm-danger" id="recipeDelBtn">삭제</button>
+      </div>
+      <div class="recipe-hint" id="recipeHint">레시피를 선택하거나 단계를 편집하고 저장하세요.</div>
+      <div class="section-lbl">단계 설정</div>
+      <div class="total-preview"><span class="lbl">총 추출 시간</span><span class="val" id="totalPreview">-</span></div>
+      <div id="stepsEditor"></div>
+      <button class="add-step-btn" id="addBtn">+ 단계 추가</button>
+    </div>
+    <div class="modal-footer">
+      <div class="btn-row">
+        <button class="btn-primary" id="recipeApplyBtn">적용하고 닫기</button>
+        <button class="btn-secondary" id="recipeResetBtn">기본값</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 설정 모달 -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div><span class="modal-title">설정</span><span class="modal-badge" id="pendingBadge">미저장</span></div>
+      <button class="modal-close" id="settingsClose">x</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- 테마 -->
+      <div class="setting-row">
+        <div class="setting-label">테마 색상</div>
+        <div class="setting-sub">앱 전체 색상 테마</div>
+        <div class="theme-grid">
+          <button class="theme-btn" data-theme="dark"><span class="theme-swatch" style="background:#0e0e0e;border-color:#c8a96e;"></span>다크</button>
+          <button class="theme-btn" data-theme="light"><span class="theme-swatch" style="background:#f5f0eb;border-color:#8b6339;"></span>라이트</button>
+          <button class="theme-btn" data-theme="sky"><span class="theme-swatch" style="background:#e8f4fb;border-color:#1a7abf;"></span>하늘</button>
+          <button class="theme-btn" data-theme="forest"><span class="theme-swatch" style="background:#0d1a0f;border-color:#6ab87a;"></span>포레스트</button>
+          <button class="theme-btn" data-theme="purple"><span class="theme-swatch" style="background:#0f0d1a;border-color:#9b7ee8;"></span>퍼플</button>
+          <button class="theme-btn" data-theme="rose"><span class="theme-swatch" style="background:#1a0d0f;border-color:#e87a8a;"></span>로즈</button>
+        </div>
+      </div>
+
+      <!-- 시작 버튼 크기 -->
+      <div class="setting-row">
+        <div class="setting-head">
+          <div><div class="setting-label">시작 버튼 크기</div><div class="setting-sub">모바일에서 한 손으로 탭하기 편하게</div></div>
+          <span class="slider-val" id="startBtnSizeVal">1.0</span>
+        </div>
+        <div style="margin-top:8px;">
+          <input type="range" id="startBtnSizeSlider" min="0.5" max="5.0" step="0.1" value="1.0">
+          <div style="display:flex;justify-content:space-between;margin-top:3px;">
+            <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">작게</span>
+            <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">크게</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 음성 -->
+      <div class="setting-row">
+        <div class="setting-head">
+          <div><div class="setting-label">음성 안내</div><div class="setting-sub">단계 시작 · 카운트다운</div></div>
+          <label class="toggle"><input type="checkbox" id="voiceToggle" checked><span class="slider-sw"></span></label>
+        </div>
+      </div>
+
+      <!-- API 키 -->
+      <div class="setting-row">
+        <div class="setting-label">ElevenLabs API 키</div>
+        <div class="setting-sub">자연스러운 한국어 AI 음성</div>
+        <div class="api-row">
+          <input class="api-input" type="password" id="apiKeyInput" placeholder="sk_...">
+          <button class="api-btn" id="apiSaveBtn">확인</button>
+        </div>
+        <div class="status-row" id="apiStatus"><span class="status-dot"></span><span id="apiStatusText">미연결</span></div>
+      </div>
+
+      <!-- 보이스 -->
+      <div class="setting-row">
+        <div class="setting-head">
+          <div><div class="setting-label">보이스</div></div>
+          <button class="api-btn" id="loadVoicesBtn">목록 불러오기</button>
+        </div>
+        <select class="voice-select-wrap" id="voiceSelect">
+          <option value="nPczCjzI2devNBz1zQrb">Brian</option>
+          <option value="cgSgspJ2msm6clMCkdW9">Jessica</option>
+          <option value="iP95p4xoKVk53GoZ742B">Chris</option>
+          <option value="onwK4e9ZLuTAKqWW03F9">Daniel</option>
+          <option value="pNInz6obpgDQGcFmaJgB">Adam</option>
+          <option value="ErXwobaYiN019PkySvjV">Antoni</option>
+          <option value="VR6AewLTigWG4xSOukaG">Arnold</option>
+          <option value="yoZ06aMxZJJ28mfd3POQ">Sam</option>
+        </select>
+      </div>
+
+      <!-- 음성 파라미터 -->
+      <div class="setting-row">
+        <div class="collapsible-head" id="paramsHead">
+          <div><div class="setting-label">음성 파라미터</div><div class="setting-sub">안정감 · 유사도 · 속도 · 스타일</div></div>
+          <span class="collapse-arrow" id="paramsArrow">+</span>
+        </div>
+        <div id="paramsBody" style="display:none">
+          <div class="sliders-grid" style="margin-top:10px;">
+            <div><div class="slider-header"><span class="slider-name">안정감 (Stability)</span><span class="slider-val" id="stabilityVal">0.75</span></div><input type="range" id="stabilitySlider" min="0" max="1" step="0.05" value="0.75"></div>
+            <div><div class="slider-header"><span class="slider-name">유사도 (Similarity)</span><span class="slider-val" id="similarityVal">0.75</span></div><input type="range" id="similaritySlider" min="0" max="1" step="0.05" value="0.75"></div>
+            <div><div class="slider-header"><span class="slider-name">속도 (Speed)</span><span class="slider-val" id="speedVal">0.95</span></div><input type="range" id="speedSlider" min="0.7" max="1.2" step="0.05" value="0.95"></div>
+            <div><div class="slider-header"><span class="slider-name">스타일 (Style)</span><span class="slider-val" id="styleVal">0.10</span></div><input type="range" id="styleSlider" min="0" max="0.5" step="0.05" value="0.10"></div>
+          </div>
+          <button class="preview-btn" id="previewBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span id="previewBtnText">미리 듣기</span>
+            <div class="preview-dots"><span></span><span></span><span></span></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Worker URL -->
+      <div class="setting-row">
+        <div class="setting-label">동기화 서버 (Worker URL)</div>
+        <div class="setting-sub">Vercel API - 어디서든 자동 동기화</div>
+        <div class="api-row">
+          <input class="api-input" type="text" id="workerUrlInput" placeholder="https://xxx.vercel.app">
+          <button class="api-btn" id="workerConnectBtn">연결</button>
+        </div>
+        <div class="status-row" id="workerStatus"><span class="status-dot"></span><span id="workerStatusText">미연결</span></div>
+      </div>
+
+      <!-- 설정 프로파일 -->
+      <div class="setting-row">
+        <div class="setting-label">설정 프로파일</div>
+        <div class="setting-sub">모든 설정 백업 / 복원</div>
+        <div class="export-row">
+          <button class="preview-btn" id="exportBtn" style="flex:1;margin-top:0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>내보내기</span>
+          </button>
+          <button class="preview-btn" id="importBtn" style="flex:1;margin-top:0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span>불러오기</span>
+          </button>
+        </div>
+        <input type="file" id="importFile" accept=".json" style="display:none">
+      </div>
+
+      <div class="settings-footer">
+        <button class="settings-save" id="settingsSaveBtn">설정 저장</button>
+        <button class="settings-cancel" id="settingsCancelBtn">취소</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// --- 데이터 ---
+var defaultSteps = [
+  {name:"뜸들이기",sec:30},{name:"1차 추출",sec:45},
+  {name:"2차 추출",sec:45},{name:"3차 추출",sec:40},{name:"완료 대기",sec:20}
+];
+var steps = JSON.parse(JSON.stringify(defaultSteps));
+var currentStep=0, remaining=0, timer=null, isPaused=false, totalElapsed=0;
+var elKey        = localStorage.getItem("el_key") || "";
+var elVoice      = localStorage.getItem("el_voice") || "nPczCjzI2devNBz1zQrb";
+var voiceParams  = JSON.parse(localStorage.getItem("voice_params")||"null") || {stability:.75,similarity:.75,speed:.95,style:.10};
+var voiceEnabled = localStorage.getItem("voice_enabled") !== "false";
+var workerUrl    = localStorage.getItem("worker_url") || "";
+var defaultRecipeName = localStorage.getItem("default_recipe") || "";
+var currentTheme = localStorage.getItem("theme") || "dark";
+var startBtnSize = parseFloat(localStorage.getItem("start_btn_size")||"1.0");
+var draftParams  = JSON.parse(JSON.stringify(voiceParams));
+var draftVoice   = elVoice;
+var draftKey     = elKey;
+var EL_MODEL     = "eleven_turbo_v2_5";
+var PREVIEW_TEXT = "안녕하세요. 여러분들께 더 편안한 커피생활을 위해 만들어진 웹페이지입니다.";
+
+// --- DOM ---
+var voiceToggle      = document.getElementById("voiceToggle");
+var homePanel        = document.getElementById("homePanel");
+var timerPanel       = document.getElementById("timerPanel");
+var stepsEditor      = document.getElementById("stepsEditor");
+var apiKeyInput      = document.getElementById("apiKeyInput");
+var apiSaveBtn       = document.getElementById("apiSaveBtn");
+var apiStatus        = document.getElementById("apiStatus");
+var apiStatusText    = document.getElementById("apiStatusText");
+var voiceLoading     = document.getElementById("voiceLoading");
+var voiceSelect      = document.getElementById("voiceSelect");
+var pauseBtn         = document.getElementById("pauseBtn");
+var settingsBtn      = document.getElementById("settingsBtn");
+var settingsModal    = document.getElementById("settingsModal");
+var recipeBtn        = document.getElementById("recipeBtn");
+var recipeModal      = document.getElementById("recipeModal");
+var headerRecipeSelect = document.getElementById("headerRecipeSelect");
+var recipeNameInput  = document.getElementById("recipeNameInput");
+var recipeSaveBtn    = document.getElementById("recipeSaveBtn");
+var recipeDefaultBtn = document.getElementById("recipeDefaultBtn");
+var recipeDelBtn     = document.getElementById("recipeDelBtn");
+var recipeSelect     = document.getElementById("recipeSelect");
+var recipeApplyBtn   = document.getElementById("recipeApplyBtn");
+var recipeResetBtn   = document.getElementById("recipeResetBtn");
+var toastEl          = document.getElementById("toast");
+var pendingBadge     = document.getElementById("pendingBadge");
+var previewBtn       = document.getElementById("previewBtn");
+var previewBtnText   = document.getElementById("previewBtnText");
+var settingsSaveBtn  = document.getElementById("settingsSaveBtn");
+var settingsCancelBtn= document.getElementById("settingsCancelBtn");
+var workerUrlInput   = document.getElementById("workerUrlInput");
+var workerConnectBtn = document.getElementById("workerConnectBtn");
+var workerStatus     = document.getElementById("workerStatus");
+var workerStatusText = document.getElementById("workerStatusText");
+var syncBar          = document.getElementById("syncBar");
+var syncText         = document.getElementById("syncText");
+
+// --- 헬퍼 ---
+function fmt(s){ return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0"); }
+function fmtSec(s){ if(s<60)return s+"초"; var m=Math.floor(s/60),r=s%60; return r===0?m+"분":m+"분 "+r+"초"; }
+function totalSec(){ return steps.reduce(function(a,s){return a+s.sec;},0); }
+var _toastT;
+function showToast(m){ toastEl.textContent=m; toastEl.classList.add("show"); clearTimeout(_toastT); _toastT=setTimeout(function(){toastEl.classList.remove("show");},2200); }
+function markPending(){ pendingBadge.classList.add("on"); }
+function clearPending(){ pendingBadge.classList.remove("on"); }
+
+// --- 테마 ---
+function applyTheme(t){
+  currentTheme=t;
+  document.documentElement.setAttribute("data-theme", t==="dark"?"":t);
+  localStorage.setItem("theme",t);
+  document.querySelectorAll(".theme-btn").forEach(function(b){ b.classList.toggle("active", b.dataset.theme===t); });
+}
+document.querySelectorAll(".theme-btn").forEach(function(b){
+  b.addEventListener("click", function(){ applyTheme(b.dataset.theme); markPending(); });
+});
+
+function applyStartBtnSize(v){
+  startBtnSize=v;
+  document.documentElement.style.setProperty("--start-btn-size", v);
+  localStorage.setItem("start_btn_size", v);
+  var sl=document.getElementById("startBtnSizeSlider");
+  var vl=document.getElementById("startBtnSizeVal");
+  if(sl)sl.value=v;
+  if(vl)vl.textContent=Number(v).toFixed(1);
+}
+document.getElementById("startBtnSizeSlider").addEventListener("input",function(){
+  applyStartBtnSize(parseFloat(this.value));
+  markPending();
+});
+
+// --- 한글 변환 ---
+var KO_NUM=["영","일","이","삼","사","오","육","칠","팔","구"];
+var KO_ORD={"1차":"일차","2차":"이차","3차":"삼차","4차":"사차","5차":"오차","6차":"육차","7차":"칠차","8차":"팔차","9차":"구차","1단계":"일단계","2단계":"이단계","3단계":"삼단계","4단계":"사단계","5단계":"오단계","6단계":"육단계"};
+var KO_TENS=["","","이십","삼십","사십","오십","육십","칠십","팔십","구십"];
+function numToKo(n){ if(n<10)return KO_NUM[n]; var t=Math.floor(n/10),u=n%10; return (t===1?"십":KO_TENS[t])+(u>0?" "+KO_NUM[u]:""); }
+function toSpeakText(raw){
+  var t=raw.replace(/\(.*?\)/g,"").trim();
+  Object.keys(KO_ORD).forEach(function(k){t=t.split(k).join(KO_ORD[k]);});
+  t=t.replace(/(\d+)초/g,function(_,n){return numToKo(parseInt(n))+"초";});
+  t=t.replace(/\b(\d)\b/g,function(_,n){return KO_NUM[parseInt(n)];});
+  return t;
+}
+
+// --- 오디오 ---
+var audioCache=new Map(), audioQueue=[], isPlayingAudio=false;
+var audioCtx=null;
+
+// iOS/Android 오디오 잠금 해제 — 모든 터치/클릭마다 resume 시도
+function getAudioCtx(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==="suspended") audioCtx.resume();
+  return audioCtx;
+}
+function unlockAudio(){
+  try{
+    var ctx=getAudioCtx();
+    // silent 버퍼 재생으로 완전 unlock
+    var buf=ctx.createBuffer(1,1,22050);
+    var src=ctx.createBufferSource();
+    src.buffer=buf;src.connect(ctx.destination);src.start(0);
+  }catch{}
+}
+// 모든 터치/클릭 시마다 unlock (once 제거)
+document.addEventListener("touchstart",unlockAudio,{passive:true});
+document.addEventListener("touchend",unlockAudio,{passive:true});
+document.addEventListener("click",unlockAudio,{passive:true});
+
+async function fetchAudio(text){
+  if(audioCache.has(text))return audioCache.get(text);
+  var r=await fetch("https://api.elevenlabs.io/v1/text-to-speech/"+elVoice+"/stream",{
+    method:"POST",headers:{"xi-api-key":elKey,"Content-Type":"application/json"},
+    body:JSON.stringify({text:text,model_id:EL_MODEL,language_code:"ko",voice_settings:{stability:voiceParams.stability,similarity_boost:voiceParams.similarity,style:voiceParams.style,use_speaker_boost:true,speed:voiceParams.speed}})
+  });
+  if(!r.ok)throw new Error("fail");
+  var url=URL.createObjectURL(await r.blob());
+  audioCache.set(text,url);
+  return url;
+}
+async function prefetchNextStep(idx){
+  if(!elKey)return;
+  var texts=[];
+  if(idx<steps.length)texts.push(toSpeakText(steps[idx].name+". "+steps[idx].sec+"초"));
+  texts.push("three","two","one");
+  for(var i=0;i<texts.length;i++){if(!audioCache.has(texts[i])){try{await fetchAudio(texts[i]);}catch{}}}
+}
+function clearAudioCache(){audioCache.forEach(function(u){URL.revokeObjectURL(u);});audioCache.clear();}
+function speak(raw){
+  if(!voiceToggle.checked)return;
+  var text=(raw==="three"||raw==="two"||raw==="one")?raw:toSpeakText(raw);
+  audioQueue.push(text);
+  if(!isPlayingAudio)processQueue();
+}
+async function processQueue(){
+  if(!audioQueue.length){isPlayingAudio=false;return;}
+  isPlayingAudio=true;
+  var text=audioQueue.shift();
+  if(elKey){
+    try{
+      voiceLoading.classList.add("on");
+      var url=await fetchAudio(text);
+      voiceLoading.classList.remove("on");
+      // AudioContext 방식으로 재생 — iOS 백그라운드에서도 작동
+      var ctx=getAudioCtx();
+      var resp=await fetch(url);
+      var arrayBuf=await resp.arrayBuffer();
+      var decoded=await ctx.decodeAudioData(arrayBuf);
+      var src=ctx.createBufferSource();
+      src.buffer=decoded;src.connect(ctx.destination);
+      src.onended=function(){processQueue();};
+      src.start(0);
+      return;
+    }catch{voiceLoading.classList.remove("on");}
+  }
+  // 폴백: Web Speech API
+  if(!window.speechSynthesis){processQueue();return;}
+  window.speechSynthesis.cancel();
+  var u=new SpeechSynthesisUtterance(text);
+  u.lang="ko-KR";u.rate=voiceParams.speed;
+  u.onend=function(){processQueue();};u.onerror=function(){processQueue();};
+  window.speechSynthesis.speak(u);
+}
+
+// --- Worker 동기화 ---
+function getLocalRecipes(){return JSON.parse(localStorage.getItem("recipes")||"[]");}
+function setLocalRecipes(arr){localStorage.setItem("recipes",JSON.stringify(arr));}
+function showSync(msg){syncBar.classList.add("on");syncText.textContent=msg;}
+function hideSync(){syncBar.classList.remove("on");}
+async function workerGet(){
+  if(!workerUrl)return null;
+  var r=await fetch(workerUrl+"/api/data");
+  if(!r.ok)throw new Error("fail");
+  return await r.json();
+}
+async function workerSave(payload){
+  if(!workerUrl)return;
+  var r=await fetch(workerUrl+"/api/data",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  if(!r.ok)throw new Error("fail");
+}
+async function loadRecipes(){
+  if(workerUrl){
+    showSync("동기화 중...");
+    try{
+      var data=await workerGet();
+      hideSync();
+      if(data&&data.recipes){
+        setLocalRecipes(data.recipes);
+        if(data.defaultRecipe){defaultRecipeName=data.defaultRecipe;localStorage.setItem("default_recipe",defaultRecipeName);}
+        if(data.settings){
+          var s=data.settings;
+          if(s.voiceParams){voiceParams=Object.assign({},voiceParams,s.voiceParams);localStorage.setItem("voice_params",JSON.stringify(voiceParams));}
+          if(s.elVoice){elVoice=s.elVoice;localStorage.setItem("el_voice",elVoice);}
+          if(s.elKey){elKey=s.elKey;localStorage.setItem("el_key",elKey);apiKeyInput.value=elKey;setStatus(apiStatus,apiStatusText,"ok","연결됨");}
+        }
+        return data.recipes;
+      }
+    }catch{hideSync();}
+  }
+  return getLocalRecipes();
+}
+async function persistAll(recipes,defRecipe){
+  setLocalRecipes(recipes);
+  if(workerUrl){
+    showSync("저장 중...");
+    try{await workerSave({recipes:recipes,defaultRecipe:defRecipe!==undefined?defRecipe:defaultRecipeName,settings:{voiceParams:voiceParams,elVoice:elVoice,elKey:elKey}});hideSync();}
+    catch{hideSync();showToast("동기화 실패 - 로컬에만 저장됨");}
+  }
+}
+
+// --- 상태 헬퍼 ---
+function setStatus(el,textEl,state,msg){
+  el.className="status-row"+(state?" "+state:"");
+  textEl.textContent=msg;
+}
+
+// --- 홈 화면 ---
+function renderHome(){
+  var cards=document.getElementById("stepCards");
+  cards.innerHTML="";
+  steps.forEach(function(s,i){
+    var card=document.createElement("div");
+    card.className="step-card"+(s.sec===0?" zero-sec":"");
+
+    // 표시 행
+    var viewRow=document.createElement("div");
+    viewRow.className="step-card-view";
+
+    var numEl=document.createElement("span");
+    numEl.className="step-card-num";
+    numEl.textContent=i+1;
+
+    var nameWrap=document.createElement("div");
+    nameWrap.style.flex="1";
+    var parts=s.name.match(/^([^(]*)(\(.*\))?$/);
+    var mainName=parts?parts[1].trim():s.name;
+    var subName=parts&&parts[2]?parts[2]:"";
+    var nameEl=document.createElement("div");
+    nameEl.className="step-card-name";
+    nameEl.textContent=mainName;
+    nameWrap.appendChild(nameEl);
+    if(subName){var subEl=document.createElement("div");subEl.className="step-card-sub";subEl.textContent=subName;nameWrap.appendChild(subEl);}
+
+    var timeEl=document.createElement("span");
+    timeEl.className="step-card-time";
+    timeEl.textContent=s.sec===0?"안내":fmtSec(s.sec);
+
+    var editBtn=document.createElement("button");
+    editBtn.className="card-edit-btn";
+    editBtn.title="수정";
+    editBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+
+    viewRow.appendChild(numEl);viewRow.appendChild(nameWrap);viewRow.appendChild(timeEl);viewRow.appendChild(editBtn);
+
+    // 편집 행
+    var editRow=document.createElement("div");
+    editRow.className="step-card-edit";
+
+    var nameInp=document.createElement("input");
+    nameInp.type="text";nameInp.value=s.name;nameInp.placeholder="단계 이름";
+
+    var secInp=document.createElement("input");
+    secInp.type="number";secInp.min="0";secInp.max="999";secInp.value=s.sec;
+
+    var lbl=document.createElement("span");
+    lbl.className="sec-lbl-sm";lbl.textContent="초";
+
+    var saveBtn=document.createElement("button");
+    saveBtn.className="card-save-btn";saveBtn.textContent="저장";
+
+    editRow.appendChild(nameInp);editRow.appendChild(secInp);editRow.appendChild(lbl);editRow.appendChild(saveBtn);
+    card.appendChild(viewRow);card.appendChild(editRow);
+
+    // 편집 버튼 클릭 → 편집 모드 토글
+    editBtn.addEventListener("click",function(e){
+      e.stopPropagation();
+      if(card.classList.contains("editing")){
+        // 취소
+        card.classList.remove("editing");
+        nameInp.value=steps[i].name;
+        secInp.value=steps[i].sec;
+      } else {
+        document.querySelectorAll(".step-card.editing").forEach(function(c){c.classList.remove("editing");});
+        card.classList.add("editing");
+        nameInp.focus();nameInp.select();
+      }
+    });
+
+    // 카드 view 클릭 → 편집 모드 진입
+    viewRow.addEventListener("click",function(e){
+      if(e.target===editBtn||editBtn.contains(e.target))return;
+      document.querySelectorAll(".step-card.editing").forEach(function(c){c.classList.remove("editing");});
+      card.classList.add("editing");
+      nameInp.focus();nameInp.select();
+    });
+
+    // 저장
+    function doSave(){
+      steps[i].name=nameInp.value||s.name;
+      steps[i].sec=Math.max(0,parseInt(secInp.value)||0);
+      card.classList.remove("editing");
+      renderHome();
+    }
+    saveBtn.addEventListener("click",function(e){e.stopPropagation();doSave();});
+    [nameInp,secInp].forEach(function(inp){
+      inp.addEventListener("keydown",function(e){
+        if(e.key==="Enter")doSave();
+        if(e.key==="Escape")card.classList.remove("editing");
+        e.stopPropagation();
+      });
+      inp.addEventListener("click",function(e){e.stopPropagation();});
+    });
+
+    cards.appendChild(card);
+  });
+  document.getElementById("homeTotalTime").textContent=fmtSec(totalSec());
+}
+
+// --- 레시피 편집기 ---
+function renderEditor(){
+  stepsEditor.innerHTML="";
+  steps.forEach(function(s,i){
+    var row=document.createElement("div");row.className="step-row";
+    var idx=document.createElement("span");idx.className="step-idx";idx.textContent=i+1;
+    var ni=document.createElement("input");ni.className="step-name-input";ni.type="text";ni.placeholder="단계 이름";ni.value=s.name;
+    var si=document.createElement("input");si.className="step-sec-input";si.type="number";si.min="0";si.max="999";si.value=s.sec;
+    var lbl=document.createElement("span");lbl.className="sec-lbl";lbl.textContent="초";
+    var db=document.createElement("button");db.className="del-btn";db.textContent="x";
+    ni.addEventListener("input",function(){steps[i].name=ni.value;updateTotalPreview();});
+    si.addEventListener("input",function(){steps[i].sec=Math.max(0,parseInt(si.value)||0);updateTotalPreview();});
+    db.addEventListener("click",function(){if(steps.length>1){steps.splice(i,1);renderEditor();}});
+    row.appendChild(idx);row.appendChild(ni);row.appendChild(si);row.appendChild(lbl);row.appendChild(db);
+    stepsEditor.appendChild(row);
+  });
+  updateTotalPreview();
+}
+function updateTotalPreview(){document.getElementById("totalPreview").textContent=fmtSec(totalSec());}
+document.getElementById("addBtn").addEventListener("click",function(){steps.push({name:"새 단계",sec:30});renderEditor();});
+recipeResetBtn.addEventListener("click",function(){steps=JSON.parse(JSON.stringify(defaultSteps));renderEditor();});
+
+// --- 레시피 드롭다운 ---
+async function renderRecipeSelect(recipes){
+  if(!recipes)recipes=await loadRecipes();
+  recipeSelect.innerHTML="<option value=''>- 레시피 선택 -</option>";
+  headerRecipeSelect.innerHTML="<option value=''>레시피 없음</option>";
+  recipes.forEach(function(r,i){
+    var opt=document.createElement("option");
+    opt.value=i;
+    opt.textContent=(r.name===defaultRecipeName?"★ ":"")+r.name+" ("+fmtSec(r.steps.reduce(function(a,s){return a+s.sec;},0))+")";
+    recipeSelect.appendChild(opt);
+    var opt2=document.createElement("option");
+    opt2.value=i;
+    opt2.textContent=(r.name===defaultRecipeName?"★ ":"")+r.name;
+    headerRecipeSelect.appendChild(opt2);
+  });
+  var curIdx=recipes.findIndex(function(r){return r.name===recipeNameInput.value;});
+  if(curIdx>=0){recipeSelect.value=curIdx;headerRecipeSelect.value=curIdx;}
+  updateDefaultBtn();
+  return recipes;
+}
+function updateDefaultBtn(){
+  var idx=parseInt(recipeSelect.value);
+  if(isNaN(idx)){recipeDefaultBtn.classList.remove("on");return;}
+  var r=getLocalRecipes()[idx];
+  recipeDefaultBtn.classList.toggle("on",!!(r&&r.name===defaultRecipeName));
+}
+// 헤더 드롭다운 변경 시 레시피 즉시 전환
+headerRecipeSelect.addEventListener("change",function(){
+  var idx=parseInt(headerRecipeSelect.value);
+  if(isNaN(idx))return;
+  var r=getLocalRecipes()[idx];
+  if(!r)return;
+  steps=JSON.parse(JSON.stringify(r.steps));
+  recipeNameInput.value=r.name;
+  recipeSelect.value=idx;
+  updateDefaultBtn();
+  renderEditor();renderHome();
+  showToast("'"+r.name+"' 불러옴");
+});
+recipeSelect.addEventListener("change",function(){
+  updateDefaultBtn();
+  var idx=parseInt(recipeSelect.value);
+  if(isNaN(idx))return;
+  var r=getLocalRecipes()[idx];
+  if(!r)return;
+  steps=JSON.parse(JSON.stringify(r.steps));
+  recipeNameInput.value=r.name;
+  renderEditor();renderHome();
+});
+recipeSaveBtn.addEventListener("click",async function(){
+  var name=recipeNameInput.value.trim();
+  if(!name){showToast("레시피 이름을 입력해주세요");return;}
+  var arr=getLocalRecipes();
+  var ei=arr.findIndex(function(r){return r.name===name;});
+  var recipe={name:name,steps:JSON.parse(JSON.stringify(steps))};
+  if(ei>=0){arr[ei]=recipe;showToast("'"+name+"' 업데이트됨");}
+  else{arr.unshift(recipe);showToast("'"+name+"' 저장됨");}
+  await persistAll(arr);
+  await renderRecipeSelect(arr);
+  var ni=arr.findIndex(function(r){return r.name===name;});
+  if(ni>=0)recipeSelect.value=ni;
+  updateDefaultBtn();renderHome();
+});
+recipeDefaultBtn.addEventListener("click",async function(){
+  var idx=parseInt(recipeSelect.value);
+  if(isNaN(idx)){showToast("레시피를 선택해주세요");return;}
+  var r=getLocalRecipes()[idx];if(!r)return;
+  if(defaultRecipeName===r.name){defaultRecipeName="";localStorage.removeItem("default_recipe");showToast("기본 해제됨");}
+  else{defaultRecipeName=r.name;localStorage.setItem("default_recipe",r.name);showToast("'"+r.name+"'을 기본으로 설정");}
+  await persistAll(getLocalRecipes(),defaultRecipeName);
+  renderRecipeSelect(getLocalRecipes());
+});
+recipeDelBtn.addEventListener("click",async function(){
+  var idx=parseInt(recipeSelect.value);
+  if(isNaN(idx)){showToast("삭제할 레시피를 선택해주세요");return;}
+  var arr=getLocalRecipes();var name=arr[idx]&&arr[idx].name;
+  arr.splice(idx,1);
+  if(defaultRecipeName===name){defaultRecipeName="";localStorage.removeItem("default_recipe");}
+  await persistAll(arr);await renderRecipeSelect(arr);showToast("'"+name+"' 삭제됨");
+});
+
+// --- 레시피 모달 ---
+recipeBtn.addEventListener("click",function(){recipeModal.classList.add("open");renderEditor();});
+document.getElementById("recipeClose").addEventListener("click",function(){recipeModal.classList.remove("open");renderHome();});
+recipeApplyBtn.addEventListener("click",function(){recipeModal.classList.remove("open");renderHome();});
+
+// --- 설정 모달 ---
+function openSettings(){
+  settingsModal.classList.add("open");
+  draftParams=JSON.parse(JSON.stringify(voiceParams));
+  draftVoice=elVoice;draftKey=elKey;
+  voiceToggle.checked=voiceEnabled;
+  syncSettingsUI();clearPending();
+}
+function closeSettings(){settingsModal.classList.remove("open");}
+function syncSettingsUI(){
+  ["stability","similarity","speed","style"].forEach(function(k){
+    document.getElementById(k+"Slider").value=draftParams[k];
+    document.getElementById(k+"Val").textContent=Number(draftParams[k]).toFixed(2);
+  });
+  voiceSelect.value=draftVoice;
+  apiKeyInput.value=draftKey;
+  if(workerUrl){workerUrlInput.value=workerUrl;setStatus(workerStatus,workerStatusText,"ok","연결됨");}
+}
+function restoreSettings(){
+  voiceToggle.checked=voiceEnabled;
+  voiceSelect.value=elVoice;
+  if(elKey){apiKeyInput.value=elKey;setStatus(apiStatus,apiStatusText,"ok","연결됨");}
+  if(workerUrl){workerUrlInput.value=workerUrl;setStatus(workerStatus,workerStatusText,"ok","연결됨");}
+  ["stability","similarity","speed","style"].forEach(function(k){
+    var sl=document.getElementById(k+"Slider");
+    var vl=document.getElementById(k+"Val");
+    sl.value=voiceParams[k];vl.textContent=Number(voiceParams[k]).toFixed(2);
+    draftParams[k]=voiceParams[k];
+    sl.addEventListener("input",function(){draftParams[k]=parseFloat(sl.value);vl.textContent=draftParams[k].toFixed(2);markPending();});
+  });
+  voiceSelect.addEventListener("change",function(){draftVoice=voiceSelect.value;markPending();});
+  voiceToggle.addEventListener("change",function(){markPending();});
+}
+settingsBtn.addEventListener("click",openSettings);
+document.getElementById("settingsClose").addEventListener("click",function(){
+  draftParams=JSON.parse(JSON.stringify(voiceParams));draftVoice=elVoice;syncSettingsUI();clearPending();closeSettings();
+});
+settingsCancelBtn.addEventListener("click",function(){
+  draftParams=JSON.parse(JSON.stringify(voiceParams));draftVoice=elVoice;syncSettingsUI();clearPending();closeSettings();
+});
+
+// 파라미터 접기
+document.getElementById("paramsHead").addEventListener("click",function(){
+  var body=document.getElementById("paramsBody");
+  var arrow=document.getElementById("paramsArrow");
+  var open=body.style.display==="none";
+  body.style.display=open?"block":"none";
+  arrow.textContent=open?"-":"+";
+});
+
+// 설정 저장
+settingsSaveBtn.addEventListener("click",async function(){
+  var inputKey=apiKeyInput.value.trim();
+  if(inputKey&&inputKey!==elKey){
+    setStatus(apiStatus,apiStatusText,"","확인 중...");
+    try{
+      var r=await fetch("https://api.elevenlabs.io/v1/user",{headers:{"xi-api-key":inputKey}});
+      if(r.ok){elKey=inputKey;localStorage.setItem("el_key",elKey);setStatus(apiStatus,apiStatusText,"ok","연결됨");}
+      else{setStatus(apiStatus,apiStatusText,"err","키 오류");return;}
+    }catch{setStatus(apiStatus,apiStatusText,"err","연결 실패");return;}
+  }
+  voiceParams=JSON.parse(JSON.stringify(draftParams));
+  elVoice=draftVoice;
+  voiceEnabled=voiceToggle.checked;
+  localStorage.setItem("voice_params",JSON.stringify(voiceParams));
+  localStorage.setItem("el_voice",elVoice);
+  localStorage.setItem("voice_enabled",voiceEnabled);
+  localStorage.setItem("theme",currentTheme);
+  localStorage.setItem("start_btn_size",startBtnSize);
+  var url=workerUrlInput.value.trim().replace(/\/$/,"");
+  if(url){workerUrl=url;localStorage.setItem("worker_url",workerUrl);}
+  if(workerUrl){
+    showSync("설정 동기화 중...");
+    try{await workerSave({recipes:getLocalRecipes(),defaultRecipe:defaultRecipeName,settings:{voiceParams:voiceParams,elVoice:elVoice,elKey:elKey}});hideSync();}
+    catch{hideSync();showToast("동기화 실패");}
+  }
+  clearPending();closeSettings();showToast("설정 저장됨");
+});
+
+// API 확인
+apiSaveBtn.addEventListener("click",async function(){
+  var key=apiKeyInput.value.trim();if(!key)return;
+  draftKey=key;setStatus(apiStatus,apiStatusText,"","확인 중...");
+  try{
+    var r=await fetch("https://api.elevenlabs.io/v1/user",{headers:{"xi-api-key":key}});
+    if(r.ok){setStatus(apiStatus,apiStatusText,"ok","연결됨");markPending();}
+    else throw new Error();
+  }catch{setStatus(apiStatus,apiStatusText,"err","연결 실패");}
+});
+
+// Worker 연결
+workerConnectBtn.addEventListener("click",async function(){
+  var url=workerUrlInput.value.trim().replace(/\/$/,"");if(!url)return;
+  setStatus(workerStatus,workerStatusText,"","확인 중...");
+  try{
+    var r=await fetch(url+"/api/data");if(!r.ok)throw new Error();
+    workerUrl=url;localStorage.setItem("worker_url",workerUrl);
+    setStatus(workerStatus,workerStatusText,"ok","연결됨 - 데이터 불러오는 중...");
+    var recipes=await loadRecipes();await renderRecipeSelect(recipes);
+    setStatus(workerStatus,workerStatusText,"ok","연결됨");
+    restoreSettings();renderHome();showToast("동기화 완료");
+  }catch{setStatus(workerStatus,workerStatusText,"err","연결 실패");}
+});
+
+// 보이스 목록
+document.getElementById("loadVoicesBtn").addEventListener("click",async function(){
+  var key=apiKeyInput.value.trim()||elKey;
+  if(!key){showToast("API 키를 먼저 입력해주세요");return;}
+  var btn=document.getElementById("loadVoicesBtn");btn.textContent="불러오는 중...";
+  try{
+    var r=await fetch("https://api.elevenlabs.io/v1/voices",{headers:{"xi-api-key":key}});
+    if(!r.ok)throw new Error();
+    var data=await r.json();
+    var cur=voiceSelect.value;voiceSelect.innerHTML="";
+    data.voices.sort(function(a,b){return a.name.localeCompare(b.name);}).forEach(function(v){
+      var opt=document.createElement("option");opt.value=v.voice_id;
+      opt.textContent=v.name+(v.labels&&v.labels.language?" - "+v.labels.language:"");
+      voiceSelect.appendChild(opt);
+    });
+    voiceSelect.value=cur;showToast("보이스 "+data.voices.length+"개 불러옴");
+  }catch{showToast("불러오기 실패");}
+  btn.textContent="목록 불러오기";
+});
+
+// 미리듣기
+var previewAudio=null;
+previewBtn.addEventListener("click",async function(){
+  if(!elKey&&!draftKey){showToast("API 키가 없습니다");return;}
+  if(previewAudio){previewAudio.pause();previewAudio=null;previewBtnText.textContent="미리 듣기";return;}
+  previewBtn.classList.add("loading");previewBtnText.textContent="생성 중...";
+  try{
+    var r=await fetch("https://api.elevenlabs.io/v1/text-to-speech/"+(draftVoice||elVoice)+"/stream",{
+      method:"POST",headers:{"xi-api-key":draftKey||elKey,"Content-Type":"application/json"},
+      body:JSON.stringify({text:PREVIEW_TEXT,model_id:EL_MODEL,language_code:"ko",voice_settings:{stability:draftParams.stability,similarity_boost:draftParams.similarity,style:draftParams.style,use_speaker_boost:true,speed:draftParams.speed}})
+    });
+    if(!r.ok)throw new Error();
+    var url=URL.createObjectURL(await r.blob());
+    previewAudio=new Audio(url);
+    previewBtn.classList.remove("loading");previewBtnText.textContent="재생 중 (탭 시 중단)";
+    previewAudio.onended=function(){URL.revokeObjectURL(url);previewAudio=null;previewBtnText.textContent="미리 듣기";};
+    previewAudio.play();
+  }catch{previewBtn.classList.remove("loading");previewBtnText.textContent="미리 듣기";showToast("미리듣기 실패");}
+});
+
+// 내보내기/불러오기
+document.getElementById("exportBtn").addEventListener("click",function(){
+  var p={version:1,exportedAt:new Date().toISOString(),voiceParams:voiceParams,elVoice:elVoice,elKey:elKey,workerUrl:workerUrl,defaultRecipe:defaultRecipeName,theme:currentTheme,startBtnSize:startBtnSize};
+  var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:"application/json"}));
+  a.download="handdrip-settings.json";a.click();showToast("내보내기 완료");
+});
+var importFile=document.getElementById("importFile");
+document.getElementById("importBtn").addEventListener("click",function(){importFile.value="";importFile.click();});
+importFile.addEventListener("change",async function(){
+  var file=importFile.files[0];if(!file)return;
+  try{
+    var p=JSON.parse(await file.text());
+    if(p.voiceParams)voiceParams=Object.assign({},voiceParams,p.voiceParams);
+    if(p.elVoice)elVoice=p.elVoice;
+    if(p.elKey)elKey=p.elKey;
+    if(p.workerUrl)workerUrl=p.workerUrl;
+    if(p.theme)applyTheme(p.theme);
+    if(p.startBtnSize)applyStartBtnSize(p.startBtnSize);
+    if(p.defaultRecipe!==undefined)defaultRecipeName=p.defaultRecipe;
+    localStorage.setItem("voice_params",JSON.stringify(voiceParams));
+    localStorage.setItem("el_voice",elVoice);
+    if(elKey)localStorage.setItem("el_key",elKey);
+    if(workerUrl)localStorage.setItem("worker_url",workerUrl);
+    if(defaultRecipeName)localStorage.setItem("default_recipe",defaultRecipeName);
+    restoreSettings();var recipes=await loadRecipes();await renderRecipeSelect(recipes);
+    showToast("설정 불러오기 완료");
+  }catch{showToast("불러오기 실패");}
+});
+
+// --- 타이머 ---
+function renderMini(){
+  var el=document.getElementById("stepListMini");el.innerHTML="";
+  steps.forEach(function(s,i){
+    var d=document.createElement("div");
+    d.className="step-mini"+(i<currentStep?" done":i===currentStep?" current":"");
+    var dot=document.createElement("div");dot.className="dot";
+    var name=document.createElement("span");name.textContent=s.name.replace(/\(.*?\)/g,"").trim();
+    var time=document.createElement("span");time.className="step-mini-time";time.textContent=s.sec===0?"안내":s.sec+"s";
+    d.appendChild(dot);d.appendChild(name);d.appendChild(time);
+    el.appendChild(d);
+  });
+}
+function updateUI(){
+  var s=steps[currentStep],total=totalSec(),stepEl=s.sec-remaining;
+  document.getElementById("stepTag").textContent="STEP "+(currentStep+1)+" / "+steps.length;
+  document.getElementById("stepTitle").textContent=s.name.replace(/\(.*?\)/g,"").trim();
+  document.getElementById("timeDisplay").textContent=fmt(remaining);
+  document.getElementById("timeDisplay").classList.toggle("urgent",remaining<=5&&remaining>0);
+  document.getElementById("stepFill").style.width=((stepEl/Math.max(s.sec,1))*100)+"%";
+  document.getElementById("totalFill").style.width=((totalElapsed/Math.max(total,1))*100)+"%";
+  document.getElementById("totalTimeVal").textContent=totalElapsed+" / "+total+"초";
+  document.getElementById("stepElapsed").textContent=stepEl+"s";
+  document.getElementById("totalElapsedDisp").textContent=totalElapsed+"s";
+  document.getElementById("totalTimeDisp").textContent=fmtSec(total);
+  var next=steps[currentStep+1];
+  document.getElementById("nextStep").textContent=next?(next.name.replace(/\(.*?\)/g,"").trim()+" ("+(next.sec===0?"안내":next.sec+"초")+")"):"없음";
+  renderMini();
+}
+function startStep(i){
+  currentStep=i;remaining=steps[i].sec;
+  document.getElementById("doneBanner").style.display="none";
+  document.getElementById("mainCard").style.display="";
+  document.getElementById("nextCard").style.display="";
+  // 단계 제목 강조 애니메이션
+  var titleEl=document.getElementById("stepTitle");
+  titleEl.classList.remove("highlight");
+  void titleEl.offsetWidth; // reflow
+  titleEl.classList.add("highlight");
+  setTimeout(function(){titleEl.classList.remove("highlight");},1000);
+  if(steps[i].sec===0){
+    speak(steps[i].name);updateUI();
+    setTimeout(function(){if(currentStep+1<steps.length)startStep(currentStep+1);else finishAll();},1200);
+    return;
+  }
+  speak(steps[i].name+". "+steps[i].sec+"초");
+  updateUI();prefetchNextStep(i+1);
+  clearInterval(timer);
+  timer=setInterval(function(){
+    if(isPaused)return;
+    remaining--;totalElapsed++;
+    if(remaining===3)speak("three");else if(remaining===2)speak("two");else if(remaining===1)speak("one");
+    if(remaining<=0){
+      clearInterval(timer);
+      if(currentStep+1<steps.length)setTimeout(function(){startStep(currentStep+1);},400);
+      else finishAll();
+      return;
+    }
+    updateUI();
+  },1000);
+}
+function finishAll(){
+  clearInterval(timer);
+  speak("추출 완료. 맛있는 커피 드세요.");
+  // 자동으로 홈으로 돌아가기
+  setTimeout(function(){
+    stopTimer();
+    // 완료 팝업 표시
+    document.getElementById("donePopupTime").textContent="총 추출 시간 "+fmtSec(totalSec());
+    document.getElementById("doneOverlay").classList.add("open");
+  }, 600);
+}
+// 완료 오버레이 — 어디 눌러도 닫힘
+document.getElementById("doneOverlay").addEventListener("click",function(){
+  document.getElementById("doneOverlay").classList.remove("open");
+});
+function stopTimer(){
+  clearInterval(timer);audioQueue=[];isPlayingAudio=false;
+  voiceLoading.classList.remove("on");clearAudioCache();
+  timerPanel.classList.remove("active");homePanel.style.display="";
+  isPaused=false;currentStep=0;remaining=0;totalElapsed=0;
+  pauseBtn.textContent="일시 정지";
+}
+document.getElementById("startBtn").addEventListener("click",function(){
+  // iOS 오디오 명시적 unlock — 사용자 제스처 안에서 실행
+  unlockAudio();
+  if(audioCtx && audioCtx.state==="suspended") audioCtx.resume();
+  homePanel.style.display="none";timerPanel.classList.add("active");
+  totalElapsed=0;isPaused=false;pauseBtn.textContent="일시 정지";
+  clearAudioCache();if(elKey)prefetchNextStep(0);
+  startStep(0);
+});
+pauseBtn.addEventListener("click",function(){
+  if(pauseBtn.textContent==="처음으로"){stopTimer();return;}
+  isPaused=!isPaused;pauseBtn.textContent=isPaused?"재개":"일시 정지";
+  if(!isPaused)speak("재개");
+});
+document.getElementById("skipBtn").addEventListener("click",function(){
+  clearInterval(timer);
+  if(currentStep+1<steps.length){totalElapsed+=remaining;setTimeout(function(){startStep(currentStep+1);},300);}
+  else finishAll();
+});
+document.getElementById("stopBtn").addEventListener("click",stopTimer);
+
+// --- 초기화 ---
+(async function(){
+  applyTheme(currentTheme);
+  applyStartBtnSize(startBtnSize);
+  restoreSettings();
+  var recipes=await renderRecipeSelect();
+  if(defaultRecipeName){
+    var found=recipes.find(function(r){return r.name===defaultRecipeName;});
+    if(found){
+      steps=JSON.parse(JSON.stringify(found.steps));
+      recipeNameInput.value=found.name;
+      // 헤더 드롭다운 선택 상태 동기화
+      var idx=recipes.indexOf(found);
+      if(idx>=0){
+        headerRecipeSelect.value=idx;
+        recipeSelect.value=idx;
+      }
+    }
+  }
+  renderHome();
+  renderEditor();
+  var hint=document.getElementById("recipeHint");
+  if(workerUrl)hint.textContent="자동 동기화 활성화됨";
+  else hint.innerHTML="레시피를 선택하거나 단계를 편집하고 저장하세요.";
+})();
+</script>
+</body>
+</html>
