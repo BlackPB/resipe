@@ -604,8 +604,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body,'Noto Sa
 .step-row:hover{border-color:var(--border-hi);}
 .step-row-top{display:flex;align-items:center;gap:6px;flex:1;min-width:0;}
 .step-row-bottom{display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:auto;}
-.step-row.dragging{opacity:.4;border-color:var(--accent);}
-.step-row.drag-over{border-color:var(--accent);border-style:dashed;transform:scale(1.01);}
+.step-row.dragging{opacity:.85;}
 .drag-handle{
   width:18px;height:20px;flex-shrink:0;cursor:grab;
   display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;
@@ -2202,12 +2201,10 @@ document.addEventListener("DOMContentLoaded",function(){
 // --- 레시피 편집기 ---
 function renderEditor(){
   stepsEditor.innerHTML="";
-  var dragSrcIdx=null;
 
   steps.forEach(function(s,i){
     var row=document.createElement("div");
     row.className="step-row";
-    row.draggable=false;
     row.dataset.idx=i;
 
     // 드래그 핸들
@@ -2238,81 +2235,86 @@ function renderEditor(){
     si.addEventListener("input",function(){steps[i].sec=Math.max(0,parseInt(si.value)||0);updateTotalPreview();});
     db.addEventListener("click",function(){if(steps.length>1){steps.splice(i,1);renderEditor();}});
 
-    // 핸들 mousedown → draggable 활성화
-    handle.addEventListener("mousedown",function(){
-      row.draggable=true;
-    });
-    row.addEventListener("dragend",function(){
-      row.draggable=false;
-    });
-    // 핸들 외 영역은 드래그 막기
-    row.addEventListener("mousedown",function(e){
-      if(!handle.contains(e.target))row.draggable=false;
-    });
-
-    // 드래그 이벤트
-    row.addEventListener("dragstart",function(e){
-      if(!row.draggable)return;
-      dragSrcIdx=i;
-      row.classList.add("dragging");
-      e.dataTransfer.effectAllowed="move";
-      e.dataTransfer.setData("text/plain",i);
-    });
-    row.addEventListener("dragend",function(){
-      row.draggable=false;
-      row.classList.remove("dragging");
-      stepsEditor.querySelectorAll(".step-row").forEach(function(r){r.classList.remove("drag-over");});
-    });
-    row.addEventListener("dragover",function(e){
-      e.preventDefault();e.dataTransfer.dropEffect="move";
-      stepsEditor.querySelectorAll(".step-row").forEach(function(r){r.classList.remove("drag-over");});
-      if(dragSrcIdx!==i)row.classList.add("drag-over");
-    });
-    row.addEventListener("dragleave",function(){row.classList.remove("drag-over");});
-    row.addEventListener("drop",function(e){
+    // ── 데스크탑 드래그 (recipeOrderList와 동일한 fixed+placeholder 방식) ──
+    var placeholder=null;
+    handle.addEventListener("mousedown",function(e){
       e.preventDefault();
-      row.classList.remove("drag-over");
-      if(dragSrcIdx===null||dragSrcIdx===i)return;
-      var moved=steps.splice(dragSrcIdx,1)[0];
-      steps.splice(i,0,moved);
-      dragSrcIdx=null;
-      renderEditor();
+      var startY=e.clientY;
+      var rect=row.getBoundingClientRect();
+      var itemH=row.offsetHeight+6;
+      var dragging=false;
+      placeholder=document.createElement("div");
+      placeholder.style.cssText="height:"+itemH+"px;border:1.5px dashed var(--accent);border-radius:var(--radius);margin-bottom:6px;opacity:.5;flex-shrink:0;box-sizing:border-box;";
+      row.style.cssText="position:fixed;top:"+rect.top+"px;left:"+rect.left+"px;width:"+rect.width+"px;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,.45);opacity:.93;pointer-events:none;margin:0;";
+      row.classList.add("dragging");
+      row.parentNode.insertBefore(placeholder,row.nextSibling);
+      function onMove(e){
+        var dy=e.clientY-startY;
+        row.style.top=(rect.top+dy)+"px";
+        if(!dragging&&Math.abs(dy)>4)dragging=true;
+        if(!dragging)return;
+        var rows=Array.from(stepsEditor.querySelectorAll(".step-row")).filter(function(r){return r!==row;});
+        var newTop=rect.top+dy;
+        var inserted=false;
+        for(var k=0;k<rows.length;k++){
+          var br=rows[k].getBoundingClientRect();
+          if(newTop<br.top+br.height/2){stepsEditor.insertBefore(placeholder,rows[k]);inserted=true;break;}
+        }
+        if(!inserted)stepsEditor.insertBefore(placeholder,stepsEditor.querySelector(".step-fullname-bar")||null);
+      }
+      function onUp(){
+        document.removeEventListener("mousemove",onMove);
+        document.removeEventListener("mouseup",onUp);
+        row.style.cssText="";
+        row.classList.remove("dragging");
+        if(placeholder&&placeholder.parentNode){stepsEditor.insertBefore(row,placeholder);placeholder.parentNode.removeChild(placeholder);}
+        placeholder=null;
+        saveEditorOrder();
+      }
+      document.addEventListener("mousemove",onMove);
+      document.addEventListener("mouseup",onUp);
     });
 
-    // 터치 드래그 — 핸들에서만
-    var touchStartY=0, touchStartIdx=0;
+    // ── 터치 드래그 (recipeOrderList와 동일한 방식) ──
     handle.addEventListener("touchstart",function(e){
-      touchStartY=e.touches[0].clientY;
-      touchStartIdx=i;
+      e.stopPropagation();
+      var touch=e.touches[0];
+      var startY=touch.clientY;
+      var rect=row.getBoundingClientRect();
+      var itemH=row.offsetHeight+6;
+      var dragging=false;
+      placeholder=document.createElement("div");
+      placeholder.style.cssText="height:"+itemH+"px;border:1.5px dashed var(--accent);border-radius:var(--radius);margin-bottom:6px;opacity:.5;flex-shrink:0;box-sizing:border-box;";
+      row.style.cssText="position:fixed;top:"+rect.top+"px;left:"+rect.left+"px;width:"+rect.width+"px;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,.45);opacity:.93;pointer-events:none;margin:0;";
       row.classList.add("dragging");
+      row.parentNode.insertBefore(placeholder,row.nextSibling);
+      function onMove(e){
+        e.preventDefault();
+        var dy=e.touches[0].clientY-startY;
+        row.style.top=(rect.top+dy)+"px";
+        if(!dragging&&Math.abs(dy)>6)dragging=true;
+        if(!dragging)return;
+        var rows=Array.from(stepsEditor.querySelectorAll(".step-row")).filter(function(r){return r!==row;});
+        var newTop=rect.top+dy;
+        var inserted=false;
+        for(var k=0;k<rows.length;k++){
+          var br=rows[k].getBoundingClientRect();
+          if(newTop<br.top+br.height/2){stepsEditor.insertBefore(placeholder,rows[k]);inserted=true;break;}
+        }
+        if(!inserted)stepsEditor.insertBefore(placeholder,stepsEditor.querySelector(".step-fullname-bar")||null);
+      }
+      function onEnd(){
+        row.removeEventListener("touchmove",onMove);
+        row.removeEventListener("touchend",onEnd);
+        row.style.cssText="";
+        row.classList.remove("dragging");
+        if(placeholder&&placeholder.parentNode){stepsEditor.insertBefore(row,placeholder);placeholder.parentNode.removeChild(placeholder);}
+        placeholder=null;
+        saveEditorOrder();
+      }
+      row.addEventListener("touchmove",onMove,{passive:false});
+      row.addEventListener("touchend",onEnd);
     },{passive:true});
-    handle.addEventListener("touchmove",function(e){
-      e.preventDefault();
-      var y=e.touches[0].clientY;
-      var rows=Array.from(stepsEditor.querySelectorAll(".step-row"));
-      rows.forEach(function(r){r.classList.remove("drag-over");});
-      var target=rows.find(function(r){
-        var rect=r.getBoundingClientRect();
-        return y>=rect.top&&y<=rect.bottom;
-      });
-      if(target&&parseInt(target.dataset.idx)!==touchStartIdx)target.classList.add("drag-over");
-    },{passive:false});
-    handle.addEventListener("touchend",function(e){
-      row.classList.remove("dragging");
-      stepsEditor.querySelectorAll(".step-row").forEach(function(r){r.classList.remove("drag-over");});
-      var y=e.changedTouches[0].clientY;
-      var rows=Array.from(stepsEditor.querySelectorAll(".step-row"));
-      var target=rows.find(function(r){
-        var rect=r.getBoundingClientRect();
-        return y>=rect.top&&y<=rect.bottom;
-      });
-      if(!target)return;
-      var targetIdx=parseInt(target.dataset.idx);
-      if(isNaN(targetIdx)||targetIdx===touchStartIdx)return;
-      var moved=steps.splice(touchStartIdx,1)[0];
-      steps.splice(targetIdx,0,moved);
-      renderEditor();
-    });
 
     var top=document.createElement("div");top.className="step-row-top";
     var bottom=document.createElement("div");bottom.className="step-row-bottom";
@@ -2324,6 +2326,19 @@ function renderEditor(){
     stepsEditor.appendChild(row);
   });
   updateTotalPreview();
+}
+
+// DOM 순서 → steps 배열 동기화 후 재렌더
+function saveEditorOrder(){
+  var rows=Array.from(stepsEditor.querySelectorAll(".step-row"));
+  var newSteps=rows.map(function(r){
+    var origIdx=parseInt(r.dataset.idx);
+    return steps[origIdx];
+  }).filter(Boolean);
+  if(newSteps.length===steps.length){
+    steps=newSteps;
+    renderEditor();
+  }
 }
 function updateTotalPreview(){document.getElementById("totalPreview").textContent=fmtSec(totalSec());}
 document.getElementById("addBtn").addEventListener("click",function(){steps.push({name:"새 단계",sec:30});renderEditor();});
