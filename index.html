@@ -114,9 +114,9 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   }
   /* 가로 모드 타이머 버튼은 --start-btn-size-timer 적용 */
   .timer-btn-row1 #pauseBtnL{
-    flex:1;width:100%;
+    flex:var(--pause-flex-landscape,2);width:100%;
     padding:0 8px !important;
-    font-size:clamp(14px, calc(4dvh * var(--start-btn-size-timer, 1)), 40px) !important;
+    font-size:clamp(14px, calc(4dvh * var(--start-btn-size-timer, 1) * var(--pause-btn-size-landscape, 1)), 40px) !important;
     border-radius:var(--radius);
   }
   .timer-btn-row2 #skipBtnL,.timer-btn-row2 #stopBtnL{
@@ -358,7 +358,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 #pauseBtn{flex:var(--pause-flex,2);}
 #skipBtn,#stopBtn{flex:1;}
 /* 시작하기 버튼 — 화면 비율 기반 + 설정 가능 */
-:root{--start-btn-size:1;--pause-flex:2;}
+:root{--start-btn-size:1;--pause-flex:2;--pause-flex-landscape:2;--pause-btn-size-landscape:1;}
 #startBtn{
   padding:clamp(16px, calc(5dvh * var(--start-btn-size)), 120px) 11px;
   font-size:clamp(14px, calc(2.5dvh * var(--start-btn-size)), 48px);
@@ -955,20 +955,45 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
               <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">크게</span>
             </div>
           </div>
+          <!-- 가로모드 일시정지 버튼 크기 -->
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+            <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;">가로 모드 일시정지 버튼</div>
+            <div style="margin-bottom:4px;">
+              <div class="slider-header"><span class="slider-name">일시정지 버튼 글씨 크기</span><span class="slider-val" id="pauseBtnSizeLandscapeVal">1.0</span></div>
+              <input type="range" id="pauseBtnSizeLandscapeSlider" min="0.5" max="3.0" step="0.1" value="1.0">
+              <div style="display:flex;justify-content:space-between;margin-top:3px;">
+                <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">작게</span>
+                <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">크게</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- 일시정지 버튼 비율 -->
+      <!-- 일시정지 버튼 비율 (세로/가로 모드) -->
       <div class="setting-row">
-        <div class="setting-head">
+        <div class="collapsible-head" id="pauseFlexHead">
           <div><div class="setting-label">일시정지 버튼 비율</div><div class="setting-sub">일시정지 : 건너뛰기 : 중단 비율 조정</div></div>
-          <span class="slider-val" id="pauseFlexVal">2</span>
+          <span class="collapse-arrow" id="pauseFlexArrow">+</span>
         </div>
-        <div style="margin-top:8px;">
-          <input type="range" id="pauseFlexSlider" min="1" max="5" step="1" value="2">
-          <div style="display:flex;justify-content:space-between;margin-top:3px;">
-            <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">1:1:1</span>
-            <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">5:1:1</span>
+        <div id="pauseFlexBody" style="display:none;margin-top:10px;">
+          <!-- 세로 모드 비율 -->
+          <div style="margin-bottom:12px;">
+            <div class="slider-header"><span class="slider-name">세로 모드 비율</span><span class="slider-val" id="pauseFlexVal">2</span></div>
+            <input type="range" id="pauseFlexSlider" min="1" max="5" step="1" value="2">
+            <div style="display:flex;justify-content:space-between;margin-top:3px;">
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">1:1:1</span>
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">5:1:1</span>
+            </div>
+          </div>
+          <!-- 가로 모드 비율 -->
+          <div>
+            <div class="slider-header"><span class="slider-name">가로 모드 비율</span><span class="slider-val" id="pauseFlexLandscapeVal">2</span></div>
+            <input type="range" id="pauseFlexLandscapeSlider" min="1" max="8" step="1" value="2">
+            <div style="display:flex;justify-content:space-between;margin-top:3px;">
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">1:1:1</span>
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">8:1:1</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1159,6 +1184,8 @@ var startBtnSize          = parseFloat(localStorage.getItem("start_btn_size")||"
 var startBtnSizeLandscape = parseFloat(localStorage.getItem("start_btn_size_landscape")||"1.0");
 var startBtnSizeTimer     = parseFloat(localStorage.getItem("start_btn_size_timer")||"1.0");
 var pauseFlex    = parseInt(localStorage.getItem("pause_flex")||"2");
+var pauseFlexLandscape = parseInt(localStorage.getItem("pause_flex_landscape")||"2");
+var pauseBtnSizeLandscape = parseFloat(localStorage.getItem("pause_btn_size_landscape")||"1.0");
 var scrollSens   = parseInt(localStorage.getItem("scroll_sens")||"3");
 var draftParams  = JSON.parse(JSON.stringify(voiceParams));
 var draftVoice   = elVoice;
@@ -1341,6 +1368,20 @@ document.getElementById("startBtnLandscapeSlider").addEventListener("input",func
   markPending();
 });
 
+function applyPauseBtnSizeLandscape(v){
+  pauseBtnSizeLandscape=parseFloat(v);
+  document.documentElement.style.setProperty("--pause-btn-size-landscape", pauseBtnSizeLandscape);
+  localStorage.setItem("pause_btn_size_landscape", pauseBtnSizeLandscape);
+  var sl=document.getElementById("pauseBtnSizeLandscapeSlider");
+  var vl=document.getElementById("pauseBtnSizeLandscapeVal");
+  if(sl)sl.value=pauseBtnSizeLandscape;
+  if(vl)vl.textContent=Number(pauseBtnSizeLandscape).toFixed(1);
+}
+document.getElementById("pauseBtnSizeLandscapeSlider").addEventListener("input",function(){
+  applyPauseBtnSizeLandscape(parseFloat(this.value));
+  markPending();
+});
+
 function applyStartBtnSizeTimer(v){
   startBtnSizeTimer=v;
   document.documentElement.style.setProperty("--start-btn-size-timer", v);
@@ -1376,6 +1417,29 @@ function applyPauseFlex(v){
 document.getElementById("pauseFlexSlider").addEventListener("input",function(){
   applyPauseFlex(parseInt(this.value));
   markPending();
+});
+
+function applyPauseFlexLandscape(v){
+  pauseFlexLandscape=parseInt(v);
+  document.documentElement.style.setProperty("--pause-flex-landscape",pauseFlexLandscape);
+  localStorage.setItem("pause_flex_landscape",pauseFlexLandscape);
+  var sl=document.getElementById("pauseFlexLandscapeSlider");
+  var vl=document.getElementById("pauseFlexLandscapeVal");
+  if(sl)sl.value=pauseFlexLandscape;
+  if(vl)vl.textContent=pauseFlexLandscape;
+}
+document.getElementById("pauseFlexLandscapeSlider").addEventListener("input",function(){
+  applyPauseFlexLandscape(parseInt(this.value));
+  markPending();
+});
+
+// 일시정지 버튼 비율 접기/펼치기
+document.getElementById("pauseFlexHead").addEventListener("click",function(){
+  var body=document.getElementById("pauseFlexBody");
+  var arrow=document.getElementById("pauseFlexArrow");
+  var open=body.style.display==="none";
+  body.style.display=open?"block":"none";
+  arrow.textContent=open?"-":"+";
 });
 
 function applyScrollSens(v){
@@ -2742,6 +2806,8 @@ function restoreSettings(){
   applyRecipeDropdown(recipeDropdownVisible);
   applyLandscapeReverse(landscapeReverse);
   applyToastDuration(toastDuration);
+  applyPauseFlexLandscape(pauseFlexLandscape);
+  applyPauseBtnSizeLandscape(pauseBtnSizeLandscape);
   voiceSelect.value=elVoice;
   if(elKey){apiKeyInput.value=elKey;setStatus(apiStatus,apiStatusText,"ok","연결됨");}
   if(elKey2){apiKeyInput2.value=elKey2;setStatus(apiStatus2,apiStatusText2,"ok","연결됨");}
@@ -2825,6 +2891,8 @@ async function applySettings(){
   localStorage.setItem("theme",currentTheme);
   localStorage.setItem("start_btn_size",startBtnSize);
   localStorage.setItem("pause_flex",pauseFlex);
+  localStorage.setItem("pause_flex_landscape",pauseFlexLandscape);
+  localStorage.setItem("pause_btn_size_landscape",pauseBtnSizeLandscape);
   localStorage.setItem("scroll_sens",scrollSens);
   var url=workerUrlInput.value.trim().replace(/\/$/,"");
   if(url){workerUrl=url;localStorage.setItem("worker_url",workerUrl);}
@@ -2932,7 +3000,7 @@ previewBtn.addEventListener("click",async function(){
 
 // 내보내기/불러오기
 document.getElementById("exportBtn").addEventListener("click",function(){
-  var p={version:1,exportedAt:new Date().toISOString(),voiceParams:voiceParams,elVoice:elVoice,elKey:elKey,elKey2:elKey2,activeKeySlot:activeKeySlot,workerUrl:workerUrl,defaultRecipe:defaultRecipeName,theme:currentTheme,startBtnSize:startBtnSize,pauseFlex:pauseFlex,scrollSens:scrollSens};
+  var p={version:1,exportedAt:new Date().toISOString(),voiceParams:voiceParams,elVoice:elVoice,elKey:elKey,elKey2:elKey2,activeKeySlot:activeKeySlot,workerUrl:workerUrl,defaultRecipe:defaultRecipeName,theme:currentTheme,startBtnSize:startBtnSize,pauseFlex:pauseFlex,pauseFlexLandscape:pauseFlexLandscape,pauseBtnSizeLandscape:pauseBtnSizeLandscape,scrollSens:scrollSens};
   var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:"application/json"}));
   a.download="handdrip-settings.json";a.click();showToast("내보내기 완료");
 });
@@ -2951,6 +3019,8 @@ importFile.addEventListener("change",async function(){
     if(p.theme)applyTheme(p.theme);
     if(p.startBtnSize)applyStartBtnSize(p.startBtnSize);
     if(p.pauseFlex)applyPauseFlex(p.pauseFlex);
+    if(p.pauseFlexLandscape)applyPauseFlexLandscape(p.pauseFlexLandscape);
+    if(p.pauseBtnSizeLandscape)applyPauseBtnSizeLandscape(p.pauseBtnSizeLandscape);
     if(p.scrollSens)applyScrollSens(p.scrollSens);
     if(p.defaultRecipe!==undefined)defaultRecipeName=p.defaultRecipe;
     localStorage.setItem("voice_params",JSON.stringify(voiceParams));
@@ -3146,6 +3216,8 @@ document.getElementById("stopBtn").addEventListener("click",stopTimer);
   applyStartBtnSizeLandscape(startBtnSizeLandscape);
   applyStartBtnSizeTimer(startBtnSizeTimer);
   applyPauseFlex(pauseFlex);
+  applyPauseFlexLandscape(pauseFlexLandscape);
+  applyPauseBtnSizeLandscape(pauseBtnSizeLandscape);
   applyScrollSens(scrollSens);
   restoreSettings();
   var recipes=await renderRecipeSelect();
