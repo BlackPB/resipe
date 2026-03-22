@@ -393,14 +393,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body,'Noto Sa
   border-radius:3px;border:1px solid var(--muted);color:var(--muted);
   flex-shrink:0;margin-right:4px;
 }
-.desc-toggle-btn{
-  padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-size:10px;
-  cursor:pointer;transition:border-color .15s,color .15s,background .15s;
-  white-space:nowrap;flex-shrink:0;
-  border:1px solid var(--border);background:transparent;color:var(--muted);
-}
-.desc-toggle-btn.on{border-color:var(--accent);color:var(--accent);background:rgba(200,169,110,.08);}
-.desc-toggle-btn:hover{border-color:var(--muted);color:var(--text);}
 
 /* 인라인 편집 영역 */
 .step-card-edit{display:none;padding:10px 14px 12px;border-top:1px solid var(--border);gap:8px;align-items:center;}
@@ -630,9 +622,22 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body,'Noto Sa
   padding:8px 10px;outline:none;
 }
 .step-fullname-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);white-space:nowrap;letter-spacing:.06em;}
-.step-sec-input{width:46px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;text-align:center;padding:4px 5px;outline:none;}
+.step-sec-input{width:46px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;text-align:center;padding:4px 5px;outline:none;-webkit-appearance:textfield;-moz-appearance:textfield;appearance:textfield;}
+.step-sec-input::-webkit-inner-spin-button,.step-sec-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 .step-sec-input:focus{border-color:var(--accent);}
 .sec-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);flex-shrink:0;}
+/* 단계 토글 버튼 공통 */
+.step-toggle-btn{
+  padding:3px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-size:10px;
+  cursor:pointer;transition:border-color .15s,color .15s,background .15s;
+  white-space:nowrap;flex-shrink:0;
+  border:1px solid var(--border);background:transparent;color:var(--muted);
+  min-width:24px;text-align:center;
+}
+.step-toggle-btn.on{border-color:var(--accent);color:var(--accent);background:rgba(200,169,110,.08);}
+.step-toggle-btn:hover{border-color:var(--muted);color:var(--text);}
+/* 기본값 placeholder 스타일 단계 */
+.step-row.is-placeholder .step-name-input{color:var(--muted);font-style:italic;}
 .del-btn{width:20px;height:20px;border:none;background:none;color:#3a3a3a;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;border-radius:4px;flex-shrink:0;transition:color .15s;}
 .del-btn:hover{color:var(--danger);}
 .recipe-order-item{
@@ -1418,8 +1423,11 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 <script>
 // --- 데이터 ---
 var defaultSteps = [
-  {name:"뜸들이기",sec:30},{name:"1차 추출",sec:45},
-  {name:"2차 추출",sec:45},{name:"3차 추출",sec:40},{name:"완료 대기",sec:20}
+  {name:"뜸들이기",sec:30,_placeholder:true},
+  {name:"1차 추출",sec:45,_placeholder:true},
+  {name:"2차 추출",sec:45,_placeholder:true},
+  {name:"3차 추출",sec:40,_placeholder:true},
+  {name:"완료 대기",sec:20,_placeholder:true}
 ];
 var steps = JSON.parse(JSON.stringify(defaultSteps));
 var recipeInfo = {bean:"", temp:"", grind:"", water:"", comment:""};
@@ -1988,9 +1996,8 @@ async function cacheAllStepAudio(){
     if(s.sec===0)texts.push(toSpeakText(s.name));
     else if(s.desc)texts.push(toSpeakText(s.name));
     else{
-      texts.push(toSpeakText(s.name+". "+s.sec+"초"));
-      // 각 단계의 카운트다운도 캐싱
-      texts.push("three","two","one");
+      texts.push(toSpeakText(s.noTime ? s.name : s.name+". "+s.sec+"초"));
+      if(!s.noCountdown) texts.push("three","two","one");
     }
   });
   texts.push(toSpeakText("추출 완료. 맛있는 커피 드세요."));
@@ -2037,8 +2044,12 @@ function showVoiceCacheStatus(state, msg){
 async function prefetchNextStep(idx){
   if(!getKeyList().length)return;
   var texts=[];
-  if(idx<steps.length)texts.push(toSpeakText(steps[idx].name+". "+steps[idx].sec+"초"));
-  texts.push("three","two","one");
+  if(idx<steps.length){
+    var s=steps[idx];
+    var t=s.desc||s.noTime ? s.name : s.name+". "+s.sec+"초";
+    texts.push(toSpeakText(t));
+  }
+  if(!steps[idx]||!steps[idx].noCountdown) texts.push("three","two","one");
   for(var i=0;i<texts.length;i++){if(!audioCache.has(texts[i])){try{await fetchAudio(texts[i]);}catch{}}}
 }
 function clearAudioCache(){audioCache.forEach(function(u){URL.revokeObjectURL(u);});audioCache.clear();}
@@ -2209,7 +2220,10 @@ function renderHome(){
       timeEl.appendChild(badge);
       timeEl.appendChild(document.createTextNode(fmtSec(s.sec)));
     } else {
-      timeEl.textContent=fmtSec(s.sec);
+      // noTime / noCountdown 배지
+      if(s.noTime){var ntb=document.createElement("span");ntb.className="step-desc-badge";ntb.textContent="무음";timeEl.appendChild(ntb);}
+      if(s.noCountdown){var ncb=document.createElement("span");ncb.className="step-desc-badge";ncb.textContent="C×";timeEl.appendChild(ncb);}
+      timeEl.appendChild(document.createTextNode(fmtSec(s.sec)));
     }
 
     var editBtn=document.createElement("button");
@@ -2329,12 +2343,35 @@ function renderEditor(){
 
     var idx=document.createElement("span");idx.className="step-idx";idx.textContent=i+1;
     var ni=document.createElement("input");ni.className="step-name-input";ni.type="text";ni.placeholder="단계 이름";ni.value=s.name;
+    // placeholder 스타일 적용
+    if(s._placeholder) row.classList.add("is-placeholder");
     var si=document.createElement("input");si.className="step-sec-input";si.type="number";si.min="0";si.max="999";si.value=s.sec;
-    var lbl=document.createElement("span");lbl.className="sec-lbl";lbl.textContent="초";
+    // 초 토글버튼 (시간 음성 on/off)
+    var secBtn=document.createElement("button");
+    secBtn.className="step-toggle-btn"+(s.noTime?"":" on");
+    secBtn.textContent="초";
+    secBtn.title="단계 시작 시 시간(초) 음성 안내";
+    secBtn.type="button";
+    secBtn.addEventListener("click",function(){
+      steps[i].noTime=!steps[i].noTime;
+      secBtn.classList.toggle("on",!steps[i].noTime);
+    });
+    // C 버튼 (카운트다운 on/off)
+    var cBtn=document.createElement("button");
+    var cDefault=(s.noCountdown===undefined)?true:!s.noCountdown;
+    cBtn.className="step-toggle-btn"+(cDefault?" on":"");
+    cBtn.textContent="C";
+    cBtn.title="3·2·1 카운트다운 음성";
+    cBtn.type="button";
+    cBtn.addEventListener("click",function(){
+      steps[i].noCountdown=!steps[i].noCountdown;
+      cBtn.classList.toggle("on",!steps[i].noCountdown);
+    });
+    // 설명 버튼
     var descBtn=document.createElement("button");
-    descBtn.className="desc-toggle-btn"+(s.desc?" on":"");
+    descBtn.className="step-toggle-btn"+(s.desc?" on":"");
     descBtn.textContent="설명";
-    descBtn.title="설명 단계로 설정 — 총 추출 시간 제외, 카운트다운 없음";
+    descBtn.title="설명 단계 — 총 추출 시간 제외, 카운트다운 없음";
     descBtn.type="button";
     descBtn.addEventListener("click",function(){
       steps[i].desc=!steps[i].desc;
@@ -2343,7 +2380,12 @@ function renderEditor(){
     });
     var db=document.createElement("button");db.className="del-btn";db.textContent="x";
 
-    ni.addEventListener("input",function(){steps[i].name=ni.value;updateTotalPreview();syncFullnameBar(ni,i);});
+    ni.addEventListener("input",function(){
+      steps[i].name=ni.value;
+      steps[i]._placeholder=false;
+      row.classList.remove("is-placeholder");
+      updateTotalPreview();syncFullnameBar(ni,i);
+    });
     ni.addEventListener("focus",function(){showFullnameBar(ni,i);});
     ni.addEventListener("blur",function(){hideFullnameBar(ni,i);});
     si.addEventListener("input",function(){steps[i].sec=Math.max(0,parseInt(si.value)||0);updateTotalPreview();});
@@ -2457,7 +2499,7 @@ function renderEditor(){
     var bottom=document.createElement("div");bottom.className="step-row-bottom";
 
     top.appendChild(handle);top.appendChild(idx);top.appendChild(ni);
-    bottom.appendChild(si);bottom.appendChild(lbl);bottom.appendChild(descBtn);bottom.appendChild(db);
+    bottom.appendChild(si);bottom.appendChild(secBtn);bottom.appendChild(cBtn);bottom.appendChild(descBtn);bottom.appendChild(db);
 
     row.appendChild(top);row.appendChild(bottom);
     stepsEditor.appendChild(row);
@@ -2476,6 +2518,13 @@ function saveEditorOrder(){
     steps=newSteps;
     renderEditor();
   }
+}
+function cleanSteps(arr){
+  return arr.map(function(s){
+    var c=Object.assign({},s);
+    delete c._placeholder;
+    return c;
+  });
 }
 function updateTotalPreview(){document.getElementById("totalPreview").textContent=fmtSec(totalSec());}
 document.getElementById("addBtn").addEventListener("click",function(){steps.push({name:"새 단계",sec:30});renderEditor();});
@@ -3014,7 +3063,7 @@ recipeSaveBtn.addEventListener("click",withBusy(async function(){
   while(arr.findIndex(function(r){return r.name===baseName;})>=0){
     baseName=name+" ("+(++count)+")";
   }
-  var recipe={name:baseName,steps:JSON.parse(JSON.stringify(steps)),info:JSON.parse(JSON.stringify(recipeInfo))};
+  var recipe={name:baseName,steps:cleanSteps(JSON.parse(JSON.stringify(steps))),info:JSON.parse(JSON.stringify(recipeInfo))};
   arr.unshift(recipe);
   recipeNameInput.value=baseName;
   showToast("'"+baseName+"' 저장됨");
@@ -3037,7 +3086,7 @@ recipeUpdateBtn.addEventListener("click",withBusy(async function(){
   if(!ok)return;
   readInfoFields();
   var arr=getLocalRecipes();
-  arr[idx]={name:name,steps:JSON.parse(JSON.stringify(steps)),info:JSON.parse(JSON.stringify(recipeInfo))};
+  arr[idx]={name:name,steps:cleanSteps(JSON.parse(JSON.stringify(steps))),info:JSON.parse(JSON.stringify(recipeInfo))};
   if(defaultRecipeName===arr[idx].name||defaultRecipeName===getLocalRecipes()[idx]?.name){
     defaultRecipeName=name;localStorage.setItem("default_recipe",name);
   }
@@ -3260,8 +3309,8 @@ function getRecipeTexts(recipeSteps){
     if(s.sec===0)texts.push(toSpeakText(s.name));
     else if(s.desc)texts.push(toSpeakText(s.name));
     else{
-      texts.push(toSpeakText(s.name+". "+s.sec+"초"));
-      texts.push("three","two","one");
+      texts.push(toSpeakText(s.noTime ? s.name : s.name+". "+s.sec+"초"));
+      if(!s.noCountdown) texts.push("three","two","one");
     }
   });
   texts.push(toSpeakText("추출 완료. 맛있는 커피 드세요."));
@@ -3656,15 +3705,23 @@ function startStep(i){
     setTimeout(function(){if(currentStep+1<steps.length)startStep(currentStep+1);else finishAll();},1200);
     return;
   }
-  speak(steps[i].desc ? steps[i].name : steps[i].name+". "+steps[i].sec+"초");
+  // 시간 음성: noTime이 true면 이름만, 아니면 이름+시간
+  var speakText=steps[i].desc||steps[i].noTime ? steps[i].name : steps[i].name+". "+steps[i].sec+"초";
+  speak(speakText);
   updateUI();prefetchNextStep(i+1);
   clearInterval(timer);
   timer=setInterval(function(){
     if(isPaused)return;
     remaining--;totalElapsed++;
     if(steps[currentStep].desc)descElapsed++;
-    if(countdownEnabled&&!steps[currentStep].desc){if(remaining===3)speak("three");else if(remaining===2)speak("two");else if(remaining===1)speak("one");}
-    else if(!countdownEnabled&&!steps[currentStep].desc&&remaining===3){
+    // 카운트다운: (전체 ON) AND (해당 단계 C ON) 일 때만 실행
+    var stepCountdown=countdownEnabled&&!steps[currentStep].desc&&!steps[currentStep].noCountdown;
+    if(stepCountdown){
+      if(remaining===3)speak("three");
+      else if(remaining===2)speak("two");
+      else if(remaining===1)speak("one");
+    } else if(!countdownEnabled&&!steps[currentStep].desc&&remaining===3){
+      // 전체 카운트다운 OFF → remaining===3에서 바로 다음 단계
       clearInterval(timer);
       if(currentStep+1<steps.length)setTimeout(function(){startStep(currentStep+1);},400);
       else finishAll();
