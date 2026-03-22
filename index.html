@@ -51,6 +51,12 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   .modal-overlay{align-items:center;}
 }
 
+/* 가로 모드 좌우 반전 */
+@media(max-height:500px) and (orientation:landscape){
+  body.landscape-reverse #homePanel{flex-direction:row-reverse;}
+}
+.timer-btn-wrap{display:none;}
+
 /* --- 모바일 가로 모드 --- */
 @media(max-height:500px) and (orientation:landscape){
   /* 전체 레이아웃 */
@@ -63,50 +69,31 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   /* 홈: 왼쪽 단계목록 + 오른쪽 정보/버튼 */
   #homePanel{flex-direction:row;gap:10px;padding:8px 0;}
   .step-cards{flex:1;overflow-y:auto;margin-bottom:0;}
-  .home-footer{
-    width:160px;flex-shrink:0;display:flex;flex-direction:column;
-    justify-content:flex-end;gap:6px;padding-bottom:4px;
-  }
+  .home-footer{width:160px;flex-shrink:0;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding-bottom:4px;}
   .total-info{flex-direction:column;gap:2px;padding:6px 10px;}
   .recipe-info-card{display:none;}
-  #startBtn{
-    padding:clamp(12px,4dvh,32px) 11px;
-    font-size:clamp(13px,2dvh,20px);
-  }
+  #startBtn{padding:clamp(12px,4dvh,32px) 11px;font-size:clamp(13px,2dvh,20px);}
 
-  /* 타이머: 위 콘텐츠 + 아래 버튼 2줄 */
-  #timerPanel{flex-direction:column;padding:6px 0;}
-  .timer-content-area{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+  /* 타이머 */
+  #timerPanel{padding:6px 0;}
+  .timer-content-area{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-height:0;}
   .timer-info-bar{margin-bottom:4px;}
   .progress-wrap{margin-bottom:4px;}
   .main-card{padding:10px 12px 8px;margin-bottom:4px;}
   .time-display{font-size:clamp(28px,7dvh,64px);margin-bottom:6px;}
   .step-title-timer{font-size:clamp(12px,2dvh,20px);margin-bottom:6px;}
   .next-card{padding:6px 12px;margin-bottom:4px;}
-  .step-list-mini{max-height:none;flex:1;}
+  .step-list-mini{max-height:60px;}
   .voice-loading{height:14px;margin-bottom:2px;}
 
-  /* 타이머 버튼 2줄 레이아웃 */
+  /* 타이머 기존 버튼 숨기고 가로 버튼 표시 */
+  #timerPanel>.btn-row{display:none;}
   .timer-btn-wrap{display:flex;flex-direction:column;gap:5px;flex-shrink:0;padding-bottom:4px;}
   .timer-btn-row1{display:flex;}
   .timer-btn-row2{display:flex;gap:5px;}
-  .timer-btn-row1 #pauseBtn{
-    flex:1;padding:clamp(8px,2.5dvh,18px) 11px;
-    font-size:clamp(12px,1.8dvh,16px);
-  }
-  .timer-btn-row2 #skipBtn,
-  .timer-btn-row2 #stopBtn{
-    flex:1;padding:clamp(6px,1.8dvh,14px) 11px;
-    font-size:clamp(11px,1.5dvh,14px);
-  }
-/* 가로 모드 버튼 — 세로에서 숨김 */
-.timer-btn-wrap{display:none;}
-@media(max-height:500px) and (orientation:landscape){
-  /* 기존 btn-row 숨기고 새 wrap 사용 */
-  #timerPanel>.btn-row{display:none;}
-  .timer-btn-wrap{display:flex;flex-direction:column;gap:5px;flex-shrink:0;padding-bottom:4px;}
+  .timer-btn-row1 #pauseBtnL{flex:1;padding:clamp(8px,2.5dvh,18px) 11px;font-size:clamp(12px,1.8dvh,16px);}
+  .timer-btn-row2 #skipBtnL,.timer-btn-row2 #stopBtnL{flex:1;padding:clamp(6px,1.8dvh,14px) 11px;font-size:clamp(11px,1.5dvh,14px);}
 }
-/* 커스텀 레시피 드롭다운 */
 .custom-select{position:relative;flex:1;min-width:0;}
 .custom-select-btn{
   display:flex;align-items:center;gap:6px;width:100%;
@@ -883,6 +870,14 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
         </div>
       </div>
 
+      <!-- 가로 모드 좌우 반전 -->
+      <div class="setting-row">
+        <div class="setting-head">
+          <div><div class="setting-label">가로 모드 좌우 반전</div><div class="setting-sub">레시피↔버튼 위치 바꾸기</div></div>
+          <label class="toggle"><input type="checkbox" id="landscapeReverseToggle"><span class="slider-sw"></span></label>
+        </div>
+      </div>
+
       <div class="setting-row">
         <div class="setting-head">
           <div><div class="setting-label">음성 안내</div><div class="setting-sub">단계 시작 · 카운트다운</div></div>
@@ -1015,6 +1010,7 @@ var voiceParams  = JSON.parse(localStorage.getItem("voice_params")||"null") || {
 var voiceEnabled = localStorage.getItem("voice_enabled") !== "false";
 var countdownEnabled = localStorage.getItem("countdown_enabled") !== "false";
 var recipeDropdownVisible = localStorage.getItem("recipe_dropdown_visible") !== "false";
+var landscapeReverse = localStorage.getItem("landscape_reverse") === "true";
 var workerUrl    = localStorage.getItem("worker_url") || "";
 var defaultRecipeName = localStorage.getItem("default_recipe") || "";
 var currentTheme = localStorage.getItem("theme") || "dark";
@@ -1222,6 +1218,13 @@ function applyRecipeDropdown(visible){
   if(el)el.style.display=visible?"":"none";
   var tog=document.getElementById("recipeDropdownToggle");
   if(tog)tog.checked=visible;
+}
+function applyLandscapeReverse(v){
+  landscapeReverse=v;
+  localStorage.setItem("landscape_reverse",v);
+  document.body.classList.toggle("landscape-reverse",v);
+  var tog=document.getElementById("landscapeReverseToggle");
+  if(tog)tog.checked=v;
 }
 function applyToastDuration(v){
   toastDuration=parseInt(v);
@@ -2549,6 +2552,7 @@ function syncSettingsUI(){
   apiKeyInput2.value=draftKey2;
   document.getElementById("activeKey"+(activeKeySlot===2?"2":"1")).checked=true;
   document.getElementById("recipeDropdownToggle").checked=recipeDropdownVisible;
+  document.getElementById("landscapeReverseToggle").checked=landscapeReverse;
   if(workerUrl){workerUrlInput.value=workerUrl;setStatus(workerStatus,workerStatusText,"ok","연결됨");}
 }
 function restoreSettings(){
@@ -2556,6 +2560,7 @@ function restoreSettings(){
   document.getElementById("countdownToggle").checked=countdownEnabled;
   document.getElementById("recipeDropdownToggle").checked=recipeDropdownVisible;
   applyRecipeDropdown(recipeDropdownVisible);
+  applyLandscapeReverse(landscapeReverse);
   applyToastDuration(toastDuration);
   voiceSelect.value=elVoice;
   if(elKey){apiKeyInput.value=elKey;setStatus(apiStatus,apiStatusText,"ok","연결됨");}
@@ -2631,6 +2636,7 @@ async function applySettings(){
   voiceEnabled=voiceToggle.checked;
   countdownEnabled=document.getElementById("countdownToggle").checked;
   applyRecipeDropdown(document.getElementById("recipeDropdownToggle").checked);
+  applyLandscapeReverse(document.getElementById("landscapeReverseToggle").checked);
   applyToastDuration(document.getElementById("toastDurationSlider").value);
   localStorage.setItem("voice_params",JSON.stringify(voiceParams));
   localStorage.setItem("el_voice",elVoice);
