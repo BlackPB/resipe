@@ -636,6 +636,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body,'Noto Sa
 }
 .step-toggle-btn.on{border-color:var(--accent);color:var(--accent);background:rgba(200,169,110,.08);}
 .step-toggle-btn:hover{border-color:var(--muted);color:var(--text);}
+.step-toggle-btn.dimmed{opacity:.25;pointer-events:none;}
 /* 기본값 placeholder 스타일 단계 */
 .step-row.is-placeholder .step-name-input{color:var(--muted);font-style:italic;}
 .del-btn{width:20px;height:20px;border:none;background:none;color:#3a3a3a;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;border-radius:4px;flex-shrink:0;transition:color .15s;}
@@ -2367,6 +2368,18 @@ function renderEditor(){
       steps[i].noCountdown=!steps[i].noCountdown;
       cBtn.classList.toggle("on",!steps[i].noCountdown);
     });
+    // 초/C 버튼 dimmed 상태 동기화
+    function syncDescDimmed(){
+      if(steps[i].desc){
+        secBtn.classList.add("dimmed");
+        cBtn.classList.add("dimmed");
+      } else {
+        secBtn.classList.remove("dimmed");
+        cBtn.classList.remove("dimmed");
+      }
+    }
+    syncDescDimmed();
+
     // 설명 버튼
     var descBtn=document.createElement("button");
     descBtn.className="step-toggle-btn"+(s.desc?" on":"");
@@ -2374,8 +2387,22 @@ function renderEditor(){
     descBtn.title="설명 단계 — 총 추출 시간 제외, 카운트다운 없음";
     descBtn.type="button";
     descBtn.addEventListener("click",function(){
-      steps[i].desc=!steps[i].desc;
+      if(!steps[i].desc){
+        // 설명 ON — 초/C 현재 상태 저장 후 dimmed
+        steps[i]._savedNoTime=steps[i].noTime;
+        steps[i]._savedNoCountdown=steps[i].noCountdown;
+        steps[i].desc=true;
+      } else {
+        // 설명 OFF — 저장된 상태 복원
+        steps[i].desc=false;
+        if(steps[i]._savedNoTime!==undefined) steps[i].noTime=steps[i]._savedNoTime;
+        if(steps[i]._savedNoCountdown!==undefined) steps[i].noCountdown=steps[i]._savedNoCountdown;
+        // 복원된 상태로 버튼 UI 갱신
+        secBtn.classList.toggle("on",!steps[i].noTime);
+        cBtn.classList.toggle("on",!steps[i].noCountdown);
+      }
       descBtn.classList.toggle("on",steps[i].desc);
+      syncDescDimmed();
       updateTotalPreview();
     });
     var db=document.createElement("button");db.className="del-btn";db.textContent="x";
@@ -2523,6 +2550,8 @@ function cleanSteps(arr){
   return arr.map(function(s){
     var c=Object.assign({},s);
     delete c._placeholder;
+    delete c._savedNoTime;
+    delete c._savedNoCountdown;
     return c;
   });
 }
