@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>핸드드립 타이머</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -33,7 +33,7 @@
 
 /* --- 모바일: 전체화면 --- */
 html,body{height:100%;}
-body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;display:flex;flex-direction:column;height:100vh;height:100svh;overflow:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);box-sizing:border-box;}
 .app-wrap{display:flex;flex-direction:column;flex:1;overflow:hidden;}
 
 /* --- 데스크탑: 중앙 카드 --- */
@@ -63,7 +63,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 @media(max-height:500px) and (orientation:landscape){
   html,body{height:100%;overflow:hidden;}
   body{padding:0;}
-  .app-wrap{height:100dvh;max-width:none;border:none;border-radius:0;overflow:hidden;}
+  .app-wrap{height:100svh;max-width:none;border:none;border-radius:0;overflow:hidden;}
   .header{padding:6px 12px;border-radius:0;flex-shrink:0;}
   .main{padding:0;overflow:hidden;display:flex;flex-direction:column;}
 
@@ -128,6 +128,8 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   /* 좌우 반전 (홈) */
   body.landscape-reverse #homePanel{flex-direction:row-reverse !important;}
   body.landscape-reverse .home-footer{border-left:none !important;border-right:1px solid var(--border) !important;}
+  body.landscape-reverse .timer-landscape-wrap{flex-direction:row-reverse !important;}
+  body.landscape-reverse .timer-side-panel{border-left:none !important;border-right:1px solid var(--border) !important;}
 
   /* ===== 타이머 좌우 분할 ===== */
   #timerPanel{padding:0;overflow:hidden;}
