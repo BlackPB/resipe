@@ -614,7 +614,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body,'Noto Sa
 .btn-sm-danger{border:1px solid var(--border);background:transparent;color:var(--muted);}
 .btn-sm-danger:hover{border-color:var(--danger);color:var(--danger);}
 .recipe-hint{font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6;}
-.comment-hi{color:var(--accent);font-weight:600;}
+.comment-hi{
+  color:var(--bg);
+  background:var(--accent);
+  font-weight:700;
+  padding:1px 5px;
+  border-radius:3px;
+  font-size:.95em;
+  letter-spacing:.01em;
+}
 .total-preview{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface2);border-radius:var(--radius);margin-bottom:10px;}
 .total-preview .lbl{font-size:12px;color:var(--muted);}
 .total-preview .val{font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);}
@@ -860,7 +868,7 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
   outline:none;transition:border-color .15s;
 }
 .info-input:focus{border-color:var(--accent);}
-.info-input::placeholder{color:#3a3a3a;font-size:clamp(10px,3vw,12px);}
+.info-input::placeholder{color:var(--muted);opacity:.55;font-size:clamp(10px,3vw,12px);}
 .info-textarea{
   width:100%;min-width:0;box-sizing:border-box;
   background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);
@@ -870,7 +878,7 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
   outline:none;resize:none;height:56px;transition:border-color .15s;
 }
 .info-textarea:focus{border-color:var(--accent);}
-.info-textarea::placeholder{color:#3a3a3a;}
+.info-textarea::placeholder{color:var(--muted);opacity:.55;}
 .done-overlay{
   display:none;position:fixed;inset:0;
   background:rgba(0,0,0,0.7);z-index:300;
@@ -1096,17 +1104,7 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
       </div>
     </div>
     <div class="modal-footer">
-      <div class="btn-row" style="margin-bottom:8px;">
-        <button class="preview-btn" id="recipeExcelExportBtn" style="flex:1;margin-top:0;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>엑셀로 내보내기</span>
-        </button>
-        <button class="preview-btn" id="recipeExcelImportBtn" style="flex:1;margin-top:0;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          <span>엑셀에서 불러오기</span>
-        </button>
-        <input type="file" id="recipeExcelFile" accept=".xlsx,.xls" style="display:none">
-      </div>
+
       <div class="btn-row">
         <button class="btn-primary" id="recipeApplyBtn" style="flex:2;">적용하고 닫기</button>
         <button class="btn-secondary" id="recipeCancelBtn" style="flex:1;">취소</button>
@@ -2480,7 +2478,7 @@ function renderEditor(){
       var v=Math.max(0,parseInt(siInp.value)||0);
       siInp.value=v;si.value=v;steps[i].sec=v;updateTotalPreview();
     });
-    siInp.addEventListener("focus",function(){this.select();});
+    siInp.addEventListener("focus",function(e){e.stopPropagation();this.select();});
     (function(idx2,inp,stepperInp){
       siBtnM.addEventListener("click",function(){var v=Math.max(0,(parseInt(stepperInp.value)||0)-1);steps[idx2].sec=v;inp.value=v;stepperInp.value=v;updateTotalPreview();});
       siBtnP.addEventListener("click",function(){var v=Math.min(999,(parseInt(stepperInp.value)||0)+1);steps[idx2].sec=v;inp.value=v;stepperInp.value=v;updateTotalPreview();});
@@ -2595,11 +2593,11 @@ function renderEditor(){
       }
 
       function getBlockDur(sq){
-        if(sq.type==="count") return 3; // 3·2·1 = 3초 고정 (1초마다 발화)
+        if(sq.type==="count") return sq.sec||3; // count도 sec으로 길이 조절 가능
         if(sq.type==="wait") return sq.sec||3;
         if(sq.type==="timer-start") return 0;
         if(sq.type==="self"||sq.type==="next"||sq.type==="step"||sq.type==="note"){
-          return sq.dur!==undefined?sq.dur:3; // 음성은 기본 3초 고정
+          return sq.dur!==undefined?sq.dur:3;
         }
         return 0;
       }
@@ -2608,7 +2606,7 @@ function renderEditor(){
         if(sq.type==="self") return (stepIdx+1)+"단계 ~"+getVoiceDur(sq)+"s";
         if(sq.type==="next") return (stepIdx+2)+"단계 ~"+getVoiceDur(sq)+"s";
         if(sq.type==="note") return "\uD83D\uDCDD "+(sq.text?sq.text.substring(0,8)+(sq.text.length>8?"\u2026":""):"메모");
-        if(sq.type==="count") return "3·2·1 (3s)";
+        if(sq.type==="count") return "3·2·1 ("+(sq.sec||3)+"s)";
         if(sq.type==="count-start") return "C@"+(sq.at||0)+"s";
         if(sq.type==="wait") return "대기 "+(sq.sec||3)+"s";
         if(sq.type==="timer-start") return "\u25B6";
@@ -2719,22 +2717,21 @@ function renderEditor(){
         if(raw===""||raw==="-") return; // 입력 중 빈칸 허용
         var v=Math.max(1,parseInt(raw)||1);
         if(_selectedSq.type==="wait"||_selectedSq.type==="count") _selectedSq.sec=v; else _selectedSq.dur=v;
-        var _restoreSq=_selectedSq;var _keepRaw=raw;
-        buildPanel();
-        showBlockInfo(_restoreSq,getBlockLabel(_restoreSq));
-        blockDurInp.value=_keepRaw; // 입력 중인 값 보존
+        // 입력 중에는 rebuildLane만 (buildPanel 호출 안 함 — 포커스 유지)
+        rebuildLane();refreshBlockInfoLbl();
       });
       blockDurInp.addEventListener("blur",function(){
         if(!_selectedSq) return;
         var v=Math.max(1,parseInt(blockDurInp.value)||1);
         if(_selectedSq.type==="wait"||_selectedSq.type==="count") _selectedSq.sec=v; else _selectedSq.dur=v;
         var _restoreSq=_selectedSq;
-        buildPanel();
+        buildPanel(); // blur 시 전체 재렌더 (타임라인 범위 포함)
         showBlockInfo(_restoreSq,getBlockLabel(_restoreSq));
         blockDurInp.value=v;
       });
       blockDurInp.addEventListener("pointerdown",function(e){e.stopPropagation();});
-      blockDurInp.addEventListener("click",function(e){e.stopPropagation();this.select();});
+      blockDurInp.addEventListener("click",function(e){e.stopPropagation();});
+      blockDurInp.addEventListener("focus",function(){this.select();});
 
       // ── 경량 스타일 업데이트 (기존 .blockEl DOM은 그대로, 위치/크기/강조만 갱신) ──
       function rebuildLane(){
@@ -3416,86 +3413,7 @@ recipeResetBtn.addEventListener("click",async function(){
   showToast("기본값으로 초기화됨");
 });
 
-// --- 엑셀 내보내기 ---
-document.getElementById("recipeExcelExportBtn").addEventListener("click",function(){
-  var recipes=getLocalRecipes();
-  if(!recipes||recipes.length===0){showToast("저장된 레시피가 없습니다");return;}
-  var wb=XLSX.utils.book_new();
-  recipes.forEach(function(r){
-    var rows=[["단계명","시간(초)","설명단계여부","설명"]];
-    r.steps.forEach(function(s){
-      rows.push([s.name, s.sec, s.desc?"Y":"", s.note||""]);
-    });
-    // 시트명 최대 31자, 특수문자 제한
-    var sheetName=r.name.replace(/[:\\\/\?\*\[\]]/g,"").substring(0,31);
-    var ws=XLSX.utils.aoa_to_sheet(rows);
-    // 컬럼 너비
-    ws["!cols"]=[{wch:24},{wch:10},{wch:12},{wch:36}];
-    XLSX.utils.book_append_sheet(wb,ws,sheetName||("recipe"+(recipes.indexOf(r)+1)));
-  });
-  // 현재 레시피 정보 시트
-  var infoRows=[["레시피명","원두(g)","온도(°C)","분쇄도","물(ml)","메모"]];
-  recipes.forEach(function(r){
-    var info=r.info||{};
-    infoRows.push([r.name,info.bean||"",info.temp||"",info.grind||"",info.water||"",info.comment||""]);
-  });
-  var wsInfo=XLSX.utils.aoa_to_sheet(infoRows);
-  wsInfo["!cols"]=[{wch:20},{wch:10},{wch:10},{wch:12},{wch:10},{wch:36}];
-  XLSX.utils.book_append_sheet(wb,wsInfo,"레시피 정보");
-  XLSX.writeFile(wb,"handdrip-recipes.xlsx");
-  showToast("엑셀 내보내기 완료");
-});
-
-// --- 엑셀 불러오기 ---
-document.getElementById("recipeExcelImportBtn").addEventListener("click",function(){
-  document.getElementById("recipeExcelFile").value="";
-  document.getElementById("recipeExcelFile").click();
-});
-document.getElementById("recipeExcelFile").addEventListener("change",async function(){
-  var file=this.files[0];if(!file)return;
-  try{
-    var ab=await file.arrayBuffer();
-    var wb=XLSX.read(ab,{type:"array"});
-    var imported=[];
-    // "레시피 정보" 시트에서 기본정보 파싱
-    var infoMap={};
-    if(wb.SheetNames.indexOf("레시피 정보")>=0){
-      var wsInfo=wb.Sheets["레시피 정보"];
-      var infoData=XLSX.utils.sheet_to_json(wsInfo,{header:1});
-      for(var ri=1;ri<infoData.length;ri++){
-        var row=infoData[ri];
-        if(!row[0])continue;
-        infoMap[row[0]]={bean:row[1]||"",temp:row[2]||"",grind:row[3]||"",water:row[4]||"",comment:row[5]||""};
-      }
-    }
-    // 나머지 시트 = 레시피
-    wb.SheetNames.forEach(function(name){
-      if(name==="레시피 정보")return;
-      var ws=wb.Sheets[name];
-      var data=XLSX.utils.sheet_to_json(ws,{header:1});
-      var stepRows=data.slice(1); // 헤더 제외
-      var steps=stepRows
-        .filter(function(r){return r[0];})
-        .map(function(r){
-          return {name:String(r[0]),sec:parseInt(r[1])||0,desc:r[2]==="Y"||r[2]===true,note:r[3]||""};
-        });
-      if(steps.length>0){
-        imported.push({name:name,steps:steps,info:infoMap[name]||{}});
-      }
-    });
-    if(imported.length===0){showToast("불러올 레시피가 없습니다");return;}
-    // 기존 레시피에 병합 (같은 이름이면 덮어쓰기)
-    var existing=getLocalRecipes();
-    imported.forEach(function(imp){
-      var idx=existing.findIndex(function(r){return r.name===imp.name;});
-      if(idx>=0)existing[idx]=imp;else existing.push(imp);
-    });
-    await persistAll(existing);
-    await renderRecipeSelect(existing);
-    renderHome();
-    showToast(imported.length+"개 레시피 불러옴");
-  }catch(e){console.error(e);showToast("엑셀 불러오기 실패");}
-});
+// 엑셀 기능 제거됨
 
 // recipeInfo 읽기/쓰기 헬퍼
 function readInfoFields(){
