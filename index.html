@@ -3591,6 +3591,31 @@ function renderRecipeOrderList(recipes, selectedIdx){
     var placeholder=null;
     handle.addEventListener("mousedown",function(e){
       e.preventDefault();
+      // 핸들 잡는 순간 해당 레시피를 선택 상태로
+      (function(){
+        var arr2=getLocalRecipes();
+        var rec2=arr2[origIdx];
+        if(!rec2) return;
+        if(rec2.name===(recipeNameInput.value||"")) return; // 이미 선택된 경우 스킵
+        steps=JSON.parse(JSON.stringify(rec2.steps));
+        recipeNameInput.value=rec2.name;
+        fillInfoFields(rec2.info);
+        suppressRecipeChange=true;
+        recipeSelect.value=origIdx;
+        suppressRecipeChange=false;
+        headerRecipeLabel.textContent=rec2.name;
+        updateDefaultBtn();showUpdateBtn(true);
+        renderEditor();renderHome();markSaved();
+        Array.from(list.querySelectorAll(".recipe-order-item")).forEach(function(el){
+          var isMe=parseInt(el.dataset.orig)===origIdx;
+          el.classList.toggle("selected",isMe);
+          var nm=el.querySelector(".recipe-order-name");
+          if(nm){nm.style.color=isMe?"var(--accent)":"";nm.style.fontWeight=isMe?"500":"";}
+          var b=el.querySelector(".recipe-order-editing-badge");
+          if(isMe&&!b){var nb=document.createElement("span");nb.className="recipe-order-editing-badge";nb.textContent="✓ 선택됨";var t=el.querySelector(".recipe-order-time");var s=el.querySelector(".recipe-order-default");el.insertBefore(nb,s||t||null);}
+          else if(!isMe&&b){b.parentNode.removeChild(b);}
+        });
+      })();
       var startY=e.clientY;
       var rect=item.getBoundingClientRect();
       var itemH=item.offsetHeight+4;
@@ -3630,6 +3655,31 @@ function renderRecipeOrderList(recipes, selectedIdx){
     // 터치 드래그
     handle.addEventListener("touchstart",function(e){
       e.stopPropagation();
+      // 핸들 잡는 순간 해당 레시피를 선택 상태로
+      (function(){
+        var arr2=getLocalRecipes();
+        var rec2=arr2[origIdx];
+        if(!rec2) return;
+        if(rec2.name===(recipeNameInput.value||"")) return;
+        steps=JSON.parse(JSON.stringify(rec2.steps));
+        recipeNameInput.value=rec2.name;
+        fillInfoFields(rec2.info);
+        suppressRecipeChange=true;
+        recipeSelect.value=origIdx;
+        suppressRecipeChange=false;
+        headerRecipeLabel.textContent=rec2.name;
+        updateDefaultBtn();showUpdateBtn(true);
+        renderEditor();renderHome();markSaved();
+        Array.from(list.querySelectorAll(".recipe-order-item")).forEach(function(el){
+          var isMe=parseInt(el.dataset.orig)===origIdx;
+          el.classList.toggle("selected",isMe);
+          var nm=el.querySelector(".recipe-order-name");
+          if(nm){nm.style.color=isMe?"var(--accent)":"";nm.style.fontWeight=isMe?"500":"";}
+          var b=el.querySelector(".recipe-order-editing-badge");
+          if(isMe&&!b){var nb=document.createElement("span");nb.className="recipe-order-editing-badge";nb.textContent="✓ 선택됨";var t=el.querySelector(".recipe-order-time");var s=el.querySelector(".recipe-order-default");el.insertBefore(nb,s||t||null);}
+          else if(!isMe&&b){b.parentNode.removeChild(b);}
+        });
+      })();
       var touch=e.touches[0];
       var startY=touch.clientY;
       var rect=item.getBoundingClientRect();
@@ -4027,7 +4077,19 @@ recipeDelBtn.addEventListener("click",withBusy(async function(){
   if(!ok)return;
   arr.splice(idx,1);
   if(defaultRecipeName===name){defaultRecipeName="";localStorage.removeItem("default_recipe");}
-  await persistAll(arr);await renderRecipeSelect(arr);showToast("'"+name+"' 삭제됨");
+  // 삭제 후 편집 화면 초기화
+  steps=JSON.parse(JSON.stringify(defaultSteps));
+  recipeNameInput.value="";
+  fillInfoFields({bean:"",temp:"",grind:"",water:"",comment:""});
+  recipeSelect.value="";
+  headerRecipeLabel.textContent="레시피 없음";
+  showUpdateBtn(false);
+  savedSnapshot=""; // dirty 체크 리셋
+  await persistAll(arr);
+  await renderRecipeSelect(arr);
+  renderEditor();
+  renderHome();
+  showToast("'"+name+"' 삭제됨");
 }));
 
 // --- 레시피 모달 ---
