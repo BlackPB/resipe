@@ -3621,7 +3621,7 @@ function renderRecipeOrderList(recipes, selectedIdx){
         item.classList.remove("dragging");
         if(placeholder&&placeholder.parentNode){list.insertBefore(item,placeholder);placeholder.parentNode.removeChild(placeholder);}
         placeholder=null;
-        saveNewOrder();
+        if(dragging) saveNewOrder(r.name); // 실제로 이동했을 때만 저장, 드래그한 아이템 선택
       }
       document.addEventListener("mousemove",onMove);
       document.addEventListener("mouseup",onUp);
@@ -3662,7 +3662,7 @@ function renderRecipeOrderList(recipes, selectedIdx){
         item.classList.remove("dragging");
         if(placeholder&&placeholder.parentNode){list.insertBefore(item,placeholder);placeholder.parentNode.removeChild(placeholder);}
         placeholder=null;
-        saveNewOrder();
+        if(dragging) saveNewOrder(r.name); // 실제로 이동했을 때만 저장, 드래그한 아이템 선택
       }
       item.addEventListener("touchmove",onMove,{passive:false});
       item.addEventListener("touchend",onEnd);
@@ -3671,17 +3671,49 @@ function renderRecipeOrderList(recipes, selectedIdx){
     return item;
   }
 
-  // 순서 저장
-  async function saveNewOrder(){
+  // 순서 저장 — 실제로 순서가 바뀐 경우에만
+  // draggedName: 드래그한 아이템의 레시피 이름 (저장 후 이 레시피를 선택 상태로)
+  async function saveNewOrder(draggedName){
     var items=Array.from(list.querySelectorAll(".recipe-order-item"));
     var origArr=getLocalRecipes();
     var newArr=items.map(function(el){return origArr[parseInt(el.dataset.orig)];}).filter(Boolean);
     if(newArr.length!==origArr.length)return;
-    var curName=recipeNameInput.value;
+    // 순서 변화 여부 확인
+    var changed=newArr.some(function(r,i){return r!==origArr[i];});
+    if(!changed)return; // 순서 그대로면 저장 안 함
     await persistAll(newArr);
     await renderRecipeSelect(newArr);
-    var ni=newArr.findIndex(function(r){return r.name===curName;});
-    if(ni>=0){recipeSelect.value=ni;headerRecipeSelect.value=ni;}
+    // 드래그한 레시피를 선택 상태로 전환
+    var targetName=draggedName||recipeNameInput.value;
+    var ni=newArr.findIndex(function(r){return r.name===targetName;});
+    if(ni>=0){
+      recipeSelect.value=ni;
+      headerRecipeSelect.value=ni;
+      // 드래그한 레시피를 편집 상태로 로드
+      var rec=newArr[ni];
+      steps=JSON.parse(JSON.stringify(rec.steps));
+      recipeNameInput.value=rec.name;
+      fillInfoFields(rec.info);
+      headerRecipeLabel.textContent=rec.name;
+      updateDefaultBtn();
+      showUpdateBtn(true);
+      renderEditor();
+      renderHome();
+      markSaved();
+      // 목록 선택 표시 갱신
+      Array.from(list.querySelectorAll(".recipe-order-item")).forEach(function(el,elIdx){
+        var isMe=elIdx===ni;
+        el.classList.toggle("selected",isMe);
+        var nm=el.querySelector(".recipe-order-name");
+        if(nm){nm.style.color=isMe?"var(--accent)":"";nm.style.fontWeight=isMe?"500":"";}
+        var b=el.querySelector(".recipe-order-editing-badge");
+        if(isMe&&!b){
+          var nb=document.createElement("span");nb.className="recipe-order-editing-badge";nb.textContent="✓ 선택됨";
+          var t=el.querySelector(".recipe-order-time");var s=el.querySelector(".recipe-order-default");
+          el.insertBefore(nb,s||t||null);
+        } else if(!isMe&&b){b.parentNode.removeChild(b);}
+      });
+    }
     showToast("순서 저장됨");
   }
 
