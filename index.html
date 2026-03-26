@@ -2201,7 +2201,10 @@ async function processQueue(){
   var text=audioQueue.shift();
   if(getKeyList().length){
     try{
-      voiceLoading.classList.add("on");
+      // 캐시 미스일 때만 "음성 생성 중" 표시 (메모리 캐시 + IDB 체크)
+      var _isCached=audioCache.has(text);
+      if(!_isCached){var _idbCheck=await idbGet(makeAudioKey(text));_isCached=!!_idbCheck;}
+      if(!_isCached) voiceLoading.classList.add("on");
       var url=await fetchAudio(text);
       voiceLoading.classList.remove("on");
       if(_audioStopped){isPlayingAudio=false;return;}
