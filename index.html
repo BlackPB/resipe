@@ -5089,6 +5089,19 @@ document.getElementById("stopBtn").addEventListener("click",stopTimer);
       // 모달이 열려있으면 무시
       var openModals=document.querySelectorAll(".modal-overlay.open");
       if(openModals.length>0) return;
+      // 헤더 드롭다운이 열려있으면 무시
+      var headerWrap=document.getElementById("headerRecipeWrap");
+      if(headerWrap&&headerWrap.classList.contains("open")) return;
+      // 터치 시작점이 스크롤 가능한 자식 요소 안이면 무시
+      var target=e.target;
+      var el=target;
+      while(el&&el!==document.body){
+        if(el.scrollHeight>el.clientHeight+2&&el!==document.documentElement){
+          var st=el.scrollTop||0;
+          if(st>2) return; // 스크롤된 컨테이너 안이면 무시
+        }
+        el=el.parentElement;
+      }
       // 스크롤이 최상단일 때만 허용
       if(getScrollTop()>2) return;
       startY=e.touches[0].clientY;
