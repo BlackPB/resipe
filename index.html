@@ -1368,6 +1368,14 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
         </div>
       </div>
 
+      <!-- 화면 꺼짐 방지 -->
+      <div class="setting-row">
+        <div class="setting-head">
+          <div><div class="setting-label">화면 꺼짐 방지</div><div class="setting-sub">새로고침 후 10분간 화면 유지</div></div>
+          <label class="toggle"><input type="checkbox" id="wakeLockToggle" checked><span class="slider-sw"></span></label>
+        </div>
+      </div>
+
       <div class="setting-row">
         <div class="setting-head">
           <div><div class="setting-label">음성 안내</div><div class="setting-sub">단계 시작 · 카운트다운</div></div>
@@ -1574,6 +1582,7 @@ var pauseFlex    = parseInt(localStorage.getItem("pause_flex")||"2");
 var pauseFlexLandscape = parseInt(localStorage.getItem("pause_flex_landscape")||"2");
 var pauseBtnSizeLandscape = parseFloat(localStorage.getItem("pause_btn_size_landscape")||"1.0");
 var scrollSens   = parseFloat(localStorage.getItem("scroll_sens")||"0.3");
+var wakeLockEnabled = localStorage.getItem("wake_lock_enabled") !== "false";
 var draftParams  = JSON.parse(JSON.stringify(voiceParams));
 var draftVoice   = elVoice;
 var draftKey     = elKey;
@@ -2522,17 +2531,32 @@ function renderEditor(){
     siInp.addEventListener("blur",function(){
       var v=Math.max(0,parseInt(siInp.value)||0);
       siInp.value=v;si.value=v;steps[i].sec=v;updateTotalPreview();
+      // 열린 편집 패널 갱신
+      var openPanel=row.querySelector(".step-seq-panel");
+      if(openPanel&&openPanel.style.display==="block"){
+        var eb=Array.from(row.querySelectorAll(".step-toggle-btn")).find(function(b){return b.textContent==="편집";});
+        if(eb){openPanel.style.display="none";eb.click();}
+      }
     });
     siInp.addEventListener("focus",function(e){e.stopPropagation();this.select();});
-    (function(idx2,inp,stepperInp){
-      siBtnM.addEventListener("click",function(){var v=Math.max(0,(parseInt(stepperInp.value)||0)-1);steps[idx2].sec=v;inp.value=v;stepperInp.value=v;updateTotalPreview();});
-      siBtnP.addEventListener("click",function(){var v=Math.min(999,(parseInt(stepperInp.value)||0)+1);steps[idx2].sec=v;inp.value=v;stepperInp.value=v;updateTotalPreview();});
-    })(i,si,siInp);
-    db.addEventListener("click",function(){
-      if(steps.length>1){
-        steps.splice(i,1);
-        renderEditor();
+    (function(idx2,inp,stepperInp,rowEl){
+      function refreshSeqPanel(){
+        var op=rowEl.querySelector(".step-seq-panel");
+        if(op&&op.style.display==="block"){
+          var eb=Array.from(rowEl.querySelectorAll(".step-toggle-btn")).find(function(b){return b.textContent==="편집";});
+          if(eb){op.style.display="none";eb.click();}
+        }
       }
+      siBtnM.addEventListener("click",function(){var v=Math.max(0,(parseInt(stepperInp.value)||0)-1);steps[idx2].sec=v;inp.value=v;stepperInp.value=v;updateTotalPreview();refreshSeqPanel();});
+      siBtnP.addEventListener("click",function(){var v=Math.min(999,(parseInt(stepperInp.value)||0)+1);steps[idx2].sec=v;inp.value=v;stepperInp.value=v;updateTotalPreview();refreshSeqPanel();});
+    })(i,si,siInp,row);
+    db.addEventListener("click",async function(){
+      if(steps.length<=1){showToast("마지막 단계는 삭제할 수 없습니다");return;}
+      var name=steps[i].name||((i+1)+"단계");
+      var ok=await recipeConfirm("<b>"+name+"</b> 단계를 삭제하겠습니까?");
+      if(!ok) return;
+      steps.splice(i,1);
+      renderEditor();
     });
 
     // 드래그 (공통) — 실제 이동 시에만 재정렬 저장, 클릭은 무시
@@ -3367,12 +3391,7 @@ function saveEditorOrder(){
   }).filter(Boolean);
   if(newSteps.length>0){
     steps=newSteps;
-    // DOM 재생성 없이 각 row의 dataset.idx와 번호 라벨만 갱신
-    rows.forEach(function(r,i){
-      r.dataset.idx=i;
-      var idxEl=r.querySelector(".step-idx");
-      if(idxEl) idxEl.textContent=i+1;
-    });
+    renderEditor(); // 인덱스 혼란 방지 위해 완전 재구성
     updateTotalPreview();
   }
 }
@@ -4262,6 +4281,8 @@ function syncSettingsUI(){
 }
 function restoreSettings(){
   voiceToggle.checked=voiceEnabled;
+  var wlt=document.getElementById("wakeLockToggle");
+  if(wlt) wlt.checked=wakeLockEnabled;
   document.getElementById("countdownToggle").checked=countdownEnabled;
   document.getElementById("recipeDropdownToggle").checked=recipeDropdownVisible;
   applyRecipeDropdown(recipeDropdownVisible);
@@ -5193,21 +5214,101 @@ document.getElementById("stopBtn").addEventListener("click",stopTimer);
     },{passive:true});
   })();
 
-  // Wake Lock — 5분 무동작 시 화면 어두워짐 방지
-  var _wakeLock=null;
-  async function requestWakeLock(){
-    if(!("wakeLock" in navigator))return;
+  // ── 화면 꺼짐 방지 — 10분간 유지 후 자동 해제 ──
+  // iOS는 Wake Lock API 미지원 → 1x1 무음 인라인 동영상 반복재생으로 우회
+  // Android/Chrome 등은 Wake Lock API 사용
+  var WAKE_LOCK_DURATION = 10 * 60 * 1000; // 10분
+  var _wlExpired = false;
+  var _wlTimer = setTimeout(function(){ _wlExpired = true; _stopWakeLock(); }, WAKE_LOCK_DURATION);
+
+  // ── 방법 1: Wake Lock API (Android Chrome 등) ──
+  var _wakeLock = null;
+  async function _requestWakeLockAPI(){
+    if(!("wakeLock" in navigator)) return false;
     try{
-      if(_wakeLock&&_wakeLock.released===false)return;
-      _wakeLock=await navigator.wakeLock.request("screen");
-      _wakeLock.addEventListener("release",function(){_wakeLock=null;});
+      if(_wakeLock && _wakeLock.released === false) return true;
+      _wakeLock = await navigator.wakeLock.request("screen");
+      _wakeLock.addEventListener("release", function(){ _wakeLock = null; });
+      return true;
+    }catch(e){ return false; }
+  }
+
+  // ── 방법 2: 무음 인라인 동영상 반복재생 (iOS Safari/PWA) ──
+  // 1x1 px, 1초짜리 투명 mp4를 base64로 인라인 — loop 속성으로 반복
+  // iOS는 재생 중인 동영상이 있으면 화면을 끄지 않음
+  var _wlVideo = null;
+  function _startVideoWakeLock(){
+    if(_wlVideo) return;
+    // 최소한의 유효한 MP4 (1프레임, 무음, 1×1px) — base64
+    // 실제로 iOS가 인식하는 최소 mp4 바이너리
+    var b64 = "AAAAIGZ0eXBtcDQyAAAAAG1wNDJpc29tAAAA"
+      + "AAAyaWRhdAAAAAhpZGF0AAAB";
+    // base64 mp4가 iOS에서 확실히 동작하도록 Blob URL 사용
+    // 대신 canvas로 1x1 동영상 스트림 생성 (더 확실한 방법)
+    try{
+      var canvas = document.createElement("canvas");
+      canvas.width = 1; canvas.height = 1;
+      var ctx2 = canvas.getContext("2d");
+      ctx2.fillStyle = "black";
+      ctx2.fillRect(0,0,1,1);
+      var stream = canvas.captureStream(1); // 1fps
+      var video = document.createElement("video");
+      video.srcObject = stream;
+      video.muted = true;
+      video.playsInline = true;
+      video.loop = true;
+      video.setAttribute("playsinline","");
+      video.setAttribute("webkit-playsinline","");
+      video.style.cssText = "position:fixed;width:1px;height:1px;top:-1px;left:-1px;opacity:0;pointer-events:none;";
+      document.body.appendChild(video);
+      video.play().then(function(){
+        _wlVideo = video;
+        // 캔버스 계속 업데이트 (iOS가 멈춘 스트림을 끊을 수 있으므로)
+        (function tick(){
+          if(_wlExpired || !_wlVideo) return;
+          ctx2.fillRect(0,0,1,1);
+          requestAnimationFrame(tick);
+        })();
+      }).catch(function(){
+        // 자동재생 차단 시 — 첫 번째 사용자 터치 후 재시도
+        document.addEventListener("touchstart", function retry(){
+          if(_wlExpired) return;
+          video.play().then(function(){ _wlVideo = video; }).catch(function(){});
+          document.removeEventListener("touchstart", retry);
+        }, {once:true, passive:true});
+        document.body.removeChild(video);
+      });
     }catch(e){}
   }
-  // 페이지 로드 시 즉시 요청
-  requestWakeLock();
-  // 포그라운드 복귀 시 재요청
-  document.addEventListener("visibilitychange",function(){
-    if(document.visibilityState==="visible") requestWakeLock();
+
+  function _stopWakeLock(){
+    // Wake Lock API 해제
+    if(_wakeLock && _wakeLock.released === false){
+      try{ _wakeLock.release(); }catch(e){}
+    }
+    _wakeLock = null;
+    // 동영상 정지 및 제거
+    if(_wlVideo){
+      try{ _wlVideo.pause(); _wlVideo.srcObject = null; }catch(e){}
+      if(_wlVideo.parentNode) _wlVideo.parentNode.removeChild(_wlVideo);
+      _wlVideo = null;
+    }
+  }
+
+  async function _startWakeLock(){
+    if(_wlExpired) return;
+    var apiOk = await _requestWakeLockAPI();
+    if(!apiOk) _startVideoWakeLock(); // iOS 등 API 미지원 시 동영상 방식
+  }
+
+  // 시작
+  _startWakeLock();
+
+  // 포그라운드 복귀 시 재시작 (만료 전)
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible" && !_wlExpired){
+      _startWakeLock();
+    }
   });
 })();
 </script>
