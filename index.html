@@ -915,6 +915,31 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 .api-usage-bar-fill{height:100%;border-radius:4px;transition:width .4s ease,background .4s;}
 .api-usage-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.04em;}
 
+/* --- Pull-to-refresh --- */
+#pullRefreshIndicator{
+  position:fixed;top:0;left:0;right:0;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  height:0;overflow:hidden;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);
+  z-index:9000;transition:none;
+  letter-spacing:.06em;
+}
+#pullRefreshIndicator.releasing{color:var(--accent);}
+#pullRefreshIndicator .ptr-icon{
+  width:16px;height:16px;border:2px solid currentColor;border-radius:50%;
+  border-top-color:transparent;flex-shrink:0;
+  transition:transform .2s;
+}
+#pullRefreshIndicator.releasing .ptr-icon{
+  transform:rotate(180deg);
+}
+#pullRefreshIndicator.spinning .ptr-icon{
+  animation:ptrSpin .7s linear infinite;
+  border-top-color:transparent;
+}
+@keyframes ptrSpin{to{transform:rotate(360deg);}}
+
 /* --- 토스트 --- */
 .toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.95);background:var(--surface);border:1px solid var(--border-hi);border-radius:var(--radius);padding:12px 22px;font-size:14px;color:var(--text);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.35);max-width:min(90vw,380px);text-align:center;}
 .toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
@@ -922,6 +947,10 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 </style>
 </head>
 <body>
+<div id="pullRefreshIndicator">
+  <div class="ptr-icon"></div>
+  <span id="pullRefreshText">당겨서 새로고침</span>
+</div>
 <div class="app-wrap">
 
 <!-- 헤더 -->
@@ -5033,6 +5062,85 @@ document.getElementById("stopBtn").addEventListener("click",stopTimer);
       audioCtx.resume();
     }
   });
+
+  // Pull-to-refresh (모든 브라우저 환경)
+  (function(){
+    var indicator=document.getElementById("pullRefreshIndicator");
+    var ptrText=document.getElementById("pullRefreshText");
+    var THRESHOLD=65; // 이 px 이상 당기면 새로고침 실행
+    var startY=0, currentY=0, pulling=false, canPull=false;
+
+    function getScrollTop(){
+      // 현재 보이는 스크롤 가능한 컨테이너의 scrollTop
+      var panels=[
+        document.getElementById("homePanel"),
+        document.getElementById("timerPanel")
+      ];
+      for(var i=0;i<panels.length;i++){
+        if(panels[i]&&panels[i].style.display!=="none"&&panels[i].offsetParent!==null){
+          return panels[i].scrollTop||0;
+        }
+      }
+      return document.body.scrollTop||document.documentElement.scrollTop||0;
+    }
+
+    document.addEventListener("touchstart",function(e){
+      if(e.touches.length!==1) return;
+      // 모달이 열려있으면 무시
+      var openModals=document.querySelectorAll(".modal-overlay.open");
+      if(openModals.length>0) return;
+      // 스크롤이 최상단일 때만 허용
+      if(getScrollTop()>2) return;
+      startY=e.touches[0].clientY;
+      canPull=true;
+      pulling=false;
+    },{passive:true});
+
+    document.addEventListener("touchmove",function(e){
+      if(!canPull) return;
+      currentY=e.touches[0].clientY;
+      var dy=currentY-startY;
+      if(dy<=0){canPull=false;indicator.style.height="0";return;}
+      if(dy>8) pulling=true;
+      if(!pulling) return;
+      // 모달이 열려있으면 무시
+      var openModals=document.querySelectorAll(".modal-overlay.open");
+      if(openModals.length>0){canPull=false;indicator.style.height="0";return;}
+      // 당기는 높이 (저항감 적용: sqrt 곡선)
+      var h=Math.min(THRESHOLD*1.4, Math.sqrt(dy)*5);
+      indicator.style.height=h+"px";
+      if(dy>=THRESHOLD){
+        indicator.classList.add("releasing");
+        ptrText.textContent="놓아서 새로고침";
+      } else {
+        indicator.classList.remove("releasing");
+        ptrText.textContent="당겨서 새로고침";
+      }
+    },{passive:true});
+
+    document.addEventListener("touchend",function(){
+      if(!pulling){canPull=false;return;}
+      var dy=currentY-startY;
+      pulling=false;canPull=false;
+      if(dy>=THRESHOLD){
+        // 새로고침 실행
+        indicator.classList.remove("releasing");
+        indicator.classList.add("spinning");
+        ptrText.textContent="새로고침 중...";
+        indicator.style.height="44px";
+        setTimeout(function(){
+          window.location.reload();
+        },600);
+      } else {
+        // 원위치
+        indicator.style.transition="height .25s ease";
+        indicator.style.height="0";
+        setTimeout(function(){indicator.style.transition="none";},260);
+        indicator.classList.remove("releasing");
+        ptrText.textContent="당겨서 새로고침";
+      }
+    },{passive:true});
+  })();
 
   // Wake Lock — 5분 무동작 시 화면 어두워짐 방지
   var _wakeLock=null;
