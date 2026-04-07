@@ -1103,11 +1103,11 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
         <div class="info-grid">
           <div class="info-field">
             <span class="info-label">원두 (g)</span>
-            <input class="info-input" type="number" id="infoBean" min="0" max="999" step="0.5" placeholder="예: 15">
+            <input class="info-input" type="number" id="infoBean" min="0" max="999" step="0.5" inputmode="decimal" placeholder="예: 15">
           </div>
           <div class="info-field">
             <span class="info-label">물 온도 (°C)</span>
-            <input class="info-input" type="number" id="infoTemp" min="0" max="110" step="1" placeholder="예: 93">
+            <input class="info-input" type="number" id="infoTemp" min="0" max="110" step="1" inputmode="numeric" placeholder="예: 93">
           </div>
           <div class="info-field">
             <span class="info-label">분쇄도 <button type="button" id="grindGuideBtn" style="background:none;border:none;cursor:pointer;padding:0 0 0 3px;vertical-align:middle;line-height:1;color:var(--muted);opacity:.7;transition:opacity .15s,color .15s;" title="분쇄도 대조표" onmouseover="this.style.opacity=1;this.style.color='var(--accent)'" onmouseout="this.style.opacity=.7;this.style.color='var(--muted)'"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="display:inline-block;vertical-align:middle;margin-bottom:1px;"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><text x="8" y="12" text-anchor="middle" font-size="9" font-family="serif" font-style="italic" fill="currentColor">i</text></svg></button></span>
@@ -1115,7 +1115,7 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
           </div>
           <div class="info-field">
             <span class="info-label">물 양 (ml)</span>
-            <input class="info-input" type="number" id="infoWater" min="0" max="9999" step="5" placeholder="예: 250">
+            <input class="info-input" type="number" id="infoWater" min="0" max="9999" step="5" inputmode="numeric" placeholder="예: 250">
           </div>
         </div>
         <div class="info-field" style="margin-bottom:12px;">
@@ -1632,11 +1632,11 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
           <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:12px;">
             <div style="flex:1;">
               <div style="font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:.04em;">클릭 수</div>
-              <input class="api-input" type="number" id="micronClickInput" placeholder="예: 18" min="0.5" max="200" step="0.5" style="width:100%;">
+              <input class="api-input" type="number" id="micronClickInput" placeholder="예: 18" min="0.5" max="200" step="0.5" inputmode="decimal" style="width:100%;">
             </div>
             <div style="flex:1;">
               <div style="font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:.04em;">마이크론 (µm)</div>
-              <input class="api-input" type="number" id="micronMicronInput" placeholder="예: 410" min="1" max="2000" step="1" style="width:100%;">
+              <input class="api-input" type="number" id="micronMicronInput" placeholder="예: 410" min="1" max="2000" step="1" inputmode="numeric" style="width:100%;">
             </div>
             <button class="api-btn" id="micronAddBtn" style="flex-shrink:0;white-space:nowrap;">+ 추가</button>
           </div>
@@ -2522,11 +2522,11 @@ function renderEditor(){
 
     var idx=document.createElement("span");idx.className="step-idx";idx.textContent=i+1;
     var ni=document.createElement("input");ni.className="step-name-input";ni.type="text";ni.placeholder="단계 이름";ni.value=s.name||"";
-    var si=document.createElement("input");si.className="step-sec-input";si.type="number";si.min="0";si.max="999";si.value=s.sec||0;si.style.display="none";
+    var si=document.createElement("input");si.className="step-sec-input";si.type="number";si.min="0";si.max="999";si.value=s.sec||0;si.inputMode="numeric";si.style.display="none";
     // -s+ 스테퍼 위젯
     var siStepper=document.createElement("div");siStepper.className="step-sec-stepper";
     var siBtnM=document.createElement("button");siBtnM.className="sss-btn";siBtnM.type="button";siBtnM.textContent="-";siBtnM.title="3초 감소";
-    var siInp=document.createElement("input");siInp.className="sss-input";siInp.type="number";siInp.min="0";siInp.max="999";siInp.value=s.sec||0;
+    var siInp=document.createElement("input");siInp.className="sss-input";siInp.type="number";siInp.min="0";siInp.max="999";siInp.value=s.sec||0;siInp.inputMode="numeric";
     var siBtnP=document.createElement("button");siBtnP.className="sss-btn";siBtnP.type="button";siBtnP.textContent="+";siBtnP.title="3초 증가";
     var siLbl=document.createElement("span");siLbl.className="sss-lbl";siLbl.textContent="s";
     siStepper.appendChild(siBtnM);siStepper.appendChild(siInp);siStepper.appendChild(siLbl);siStepper.appendChild(siBtnP);
@@ -2565,7 +2565,7 @@ function renderEditor(){
     // 메모 -s+ 스테퍼
     var noteStepWrap=document.createElement("div");noteStepWrap.className="step-sec-stepper note-row-stepper";
     var noteBtnM=document.createElement("button");noteBtnM.className="sss-btn";noteBtnM.type="button";noteBtnM.textContent="-";noteBtnM.title="3초 감소";
-    var noteSecInp=document.createElement("input");noteSecInp.className="sss-input";noteSecInp.type="number";noteSecInp.min="0";noteSecInp.max="999";noteSecInp.value=s.sec||0;
+    var noteSecInp=document.createElement("input");noteSecInp.className="sss-input";noteSecInp.type="number";noteSecInp.min="0";noteSecInp.max="999";noteSecInp.value=s.sec||0;noteSecInp.inputMode="numeric";
     var noteSecLbl=document.createElement("span");noteSecLbl.className="sss-lbl";noteSecLbl.textContent="s";
     var noteBtnP=document.createElement("button");noteBtnP.className="sss-btn";noteBtnP.type="button";noteBtnP.textContent="+";noteBtnP.title="3초 증가";
     noteStepWrap.appendChild(noteBtnM);noteStepWrap.appendChild(noteSecInp);noteStepWrap.appendChild(noteSecLbl);noteStepWrap.appendChild(noteBtnP);
@@ -2810,7 +2810,7 @@ function renderEditor(){
       blockDurBtnM.textContent="-";
       blockDurBtnM.style.cssText="width:22px;height:20px;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:4px;font-size:13px;cursor:pointer;line-height:1;font-family:'DM Mono',monospace;";
       var blockDurInp=document.createElement("input");
-      blockDurInp.type="number";blockDurInp.min="1";blockDurInp.max="999";
+      blockDurInp.type="number";blockDurInp.min="1";blockDurInp.max="999";blockDurInp.inputMode="numeric";
       blockDurInp.style.cssText="width:36px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;text-align:center;padding:2px;-webkit-appearance:textfield;-moz-appearance:textfield;appearance:textfield;";
       var blockDurLblEl=document.createElement("span");
       blockDurLblEl.textContent="s";
@@ -3370,7 +3370,7 @@ function renderEditor(){
         var noteEditDurLbl=document.createElement("span");noteEditDurLbl.textContent="길이";noteEditDurLbl.style.cssText="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);";
         var noteEditDurStepper=document.createElement("div");noteEditDurStepper.style.cssText="display:flex;align-items:center;gap:2px;";
         var nedBtnM=document.createElement("button");nedBtnM.textContent="-";nedBtnM.style.cssText="width:22px;height:22px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);border-radius:4px;font-size:13px;cursor:pointer;line-height:1;";
-        var nedInp=document.createElement("input");nedInp.type="number";nedInp.min="1";nedInp.max="999";nedInp.style.cssText="width:34px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;text-align:center;padding:2px;-webkit-appearance:textfield;-moz-appearance:textfield;appearance:textfield;";
+        var nedInp=document.createElement("input");nedInp.type="number";nedInp.min="1";nedInp.max="999";nedInp.inputMode="numeric";nedInp.style.cssText="width:34px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;text-align:center;padding:2px;-webkit-appearance:textfield;-moz-appearance:textfield;appearance:textfield;";
         var nedLbl=document.createElement("span");nedLbl.textContent="s";nedLbl.style.cssText="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);";
         var nedBtnP=document.createElement("button");nedBtnP.textContent="+";nedBtnP.style.cssText="width:22px;height:22px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);border-radius:4px;font-size:13px;cursor:pointer;line-height:1;";
         noteEditDurStepper.appendChild(nedBtnM);noteEditDurStepper.appendChild(nedInp);noteEditDurStepper.appendChild(nedLbl);noteEditDurStepper.appendChild(nedBtnP);
