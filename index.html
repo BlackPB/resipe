@@ -24,6 +24,7 @@
 --btn-radius:8px;
 --accent-glow:none;
 --bg-texture:none;
+--step-bar-1:#3B82F6;--step-bar-2:#8B5CF6;--step-bar-3:#EC4899;--step-bar-4:#e05a4a;
 }
 
 /* ── 1. MODERN — 클린 화이트, 네온 민트 포인트 ── */
@@ -41,6 +42,7 @@
   --btn-radius:999px;
   --accent-glow:0 0 20px rgba(0,200,150,.25);
   --bg-texture:none;
+  --step-bar-1:#00c896;--step-bar-2:#00b8e0;--step-bar-3:#8060f0;--step-bar-4:#f04060;
 }
 
 /* ── 2. MINIMAL — 종이질감 오프화이트, 먹색 타이포 ── */
@@ -58,6 +60,7 @@
   --btn-radius:4px;
   --accent-glow:none;
   --bg-texture:none;
+  --step-bar-1:#1a1a1a;--step-bar-2:#666;--step-bar-3:#999;--step-bar-4:#c0392b;
 }
 
 /* ── 3. VIVID — 딥 퍼플 다크, 일렉트릭 핑크 포인트 ── */
@@ -75,6 +78,7 @@
   --btn-radius:10px;
   --accent-glow:0 0 24px rgba(255,60,172,.4);
   --bg-texture:none;
+  --step-bar-1:#ff3cac;--step-bar-2:#c060ff;--step-bar-3:#6060ff;--step-bar-4:#ff4060;
 }
 
 /* ── 4. CALM — 딥 포레스트 그린, 세이지 포인트 ── */
@@ -92,6 +96,7 @@
   --btn-radius:10px;
   --accent-glow:none;
   --bg-texture:none;
+  --step-bar-1:#8fbc6a;--step-bar-2:#60c890;--step-bar-3:#a8d484;--step-bar-4:#d4604a;
 }
 
 /* ── 5. NOIR — 순수 블랙, 차가운 화이트 타이포 ── */
@@ -109,6 +114,7 @@
   --btn-radius:2px;
   --accent-glow:none;
   --bg-texture:none;
+  --step-bar-1:#e8e8e8;--step-bar-2:#aaaaaa;--step-bar-3:#888888;--step-bar-4:#cc3333;
 }
 
 /* ── 6. LATTE — 크림 라이트, 에스프레소 브라운 ── */
@@ -126,6 +132,7 @@
   --btn-radius:12px;
   --accent-glow:none;
   --bg-texture:none;
+  --step-bar-1:#6b4226;--step-bar-2:#a07050;--step-bar-3:#c89860;--step-bar-4:#c0402a;
 }
 
 /* ── 7. OCEAN — 딥 네이비, 시안 포인트 ── */
@@ -143,6 +150,7 @@
   --btn-radius:10px;
   --accent-glow:0 0 20px rgba(0,212,255,.3);
   --bg-texture:none;
+  --step-bar-1:#00d4ff;--step-bar-2:#00e8a0;--step-bar-3:#8060ff;--step-bar-4:#ff5060;
 }
 
 /* ── 8. PAPER — 따뜻한 크림 라이트 인쇄물 ── */
@@ -160,14 +168,80 @@
   --btn-radius:6px;
   --accent-glow:none;
   --bg-texture:none;
+  --step-bar-1:#2c4a7c;--step-bar-2:#3d6090;--step-bar-3:#8a6040;--step-bar-4:#a83020;
 }
 
 /* 레거시 테마 유지 */
-[data-theme="light"]{--bg:#f5f0eb;--surface:#fff;--surface2:#f0ebe4;--border:#e0d8cf;--border-hi:#c8bfb5;--accent:#8b6339;--accent2:#a07845;--text:#2a1f14;--muted:#8a7a6a;--radius:8px;--font-body:'Noto Sans KR',sans-serif;--font-mono:'DM Mono',monospace;--font-display:'DM Mono',monospace;--header-bg:#fff;--card-shadow:none;--btn-radius:8px;--accent-glow:none;}
-[data-theme="mocha"]{--bg:#1a1410;--surface:#241c16;--surface2:#2e251d;--border:#3d3028;--border-hi:#5a4535;--accent:#d4a574;--accent2:#e8c09a;--text:#f2ece4;--muted:#7a6454;--radius:8px;--font-body:'Noto Sans KR',sans-serif;--font-mono:'DM Mono',monospace;--font-display:'DM Mono',monospace;--header-bg:#241c16;--card-shadow:none;--btn-radius:8px;--accent-glow:none;}
-[data-theme="slate"]{--bg:#0d1117;--surface:#161b22;--surface2:#1f2937;--border:#2d3748;--border-hi:#4a5568;--accent:#64b5f6;--accent2:#90caf9;--text:#e2e8f0;--muted:#718096;--radius:8px;--font-body:'Noto Sans KR',sans-serif;--font-mono:'DM Mono',monospace;--font-display:'DM Mono',monospace;--header-bg:#161b22;--card-shadow:none;--btn-radius:8px;--accent-glow:none;}
-[data-theme="ivory"]{--bg:#faf7f2;--surface:#ffffff;--surface2:#f3ede4;--border:#e8ddd0;--border-hi:#d4c4b0;--accent:#7c6248;--accent2:#9a7d5e;--text:#2c1f14;--muted:#9a8878;--radius:8px;--font-body:'Noto Sans KR',sans-serif;--font-mono:'DM Mono',monospace;--font-display:'DM Mono',monospace;--header-bg:#ffffff;--card-shadow:none;--btn-radius:8px;--accent-glow:none;}
-[data-theme="midnight"]{--bg:#07080f;--surface:#0e1018;--surface2:#161824;--border:#1e2235;--border-hi:#2d324d;--accent:#b8965a;--accent2:#d4ae78;--text:#eeeaf8;--muted:#5a5878;--radius:8px;--font-body:'Noto Sans KR',sans-serif;--font-mono:'DM Mono',monospace;--font-display:'DM Mono',monospace;--header-bg:#0e1018;--card-shadow:none;--btn-radius:8px;--accent-glow:none;}
+[data-theme="light"]{
+  --bg:#EFF6FF;--surface:#ffffff;--surface2:#DBEAFE;
+  --border:#BFDBFE;--border-hi:#93C5FD;
+  --accent:#10367D;--accent2:#1e4fa0;
+  --text:#0f1e3d;--muted:#6b80a0;
+  --danger:#FF4040;--success:#16a34a;--radius:10px;
+  --font-body:'Noto Sans KR',sans-serif;
+  --font-mono:'DM Mono',monospace;
+  --font-display:'Playfair Display',serif;
+  --header-bg:#ffffff;
+  --card-shadow:0 2px 12px rgba(16,54,125,.10);
+  --btn-radius:10px;--accent-glow:none;
+  --step-bar-1:#10367D;--step-bar-2:#1e4fa0;--step-bar-3:#FF6B9D;--step-bar-4:#FF4040;
+}
+[data-theme="mocha"]{
+  --bg:#12100e;--surface:#1e1812;--surface2:#28201a;
+  --border:#3a2e24;--border-hi:#5a4030;
+  --accent:#e8a060;--accent2:#f0b878;
+  --text:#f5ede4;--muted:#8a6a50;
+  --danger:#e05040;--success:#60a860;--radius:10px;
+  --font-body:'Noto Sans KR',sans-serif;
+  --font-mono:'DM Mono',monospace;
+  --font-display:'Playfair Display',serif;
+  --header-bg:#1e1812;
+  --card-shadow:0 2px 16px rgba(0,0,0,.5);
+  --btn-radius:10px;--accent-glow:0 0 18px rgba(232,160,96,.2);
+  --step-bar-1:#e8a060;--step-bar-2:#f0b878;--step-bar-3:#e07050;--step-bar-4:#c85040;
+}
+[data-theme="slate"]{
+  --bg:#0a0f1a;--surface:#111827;--surface2:#1a2535;
+  --border:#1e3050;--border-hi:#2e4870;
+  --accent:#60a8f0;--accent2:#88c4ff;
+  --text:#d8e8f8;--muted:#506888;
+  --danger:#f05060;--success:#40c880;--radius:10px;
+  --font-body:'Outfit',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+  --font-display:'Outfit',sans-serif;
+  --header-bg:#111827;
+  --card-shadow:0 0 24px rgba(96,168,240,.08),0 2px 8px rgba(0,0,0,.5);
+  --btn-radius:10px;--accent-glow:0 0 20px rgba(96,168,240,.25);
+  --step-bar-1:#60a8f0;--step-bar-2:#40d8a0;--step-bar-3:#a080f0;--step-bar-4:#f06080;
+}
+[data-theme="ivory"]{
+  --bg:#faf6ef;--surface:#ffffff;--surface2:#f2ece0;
+  --border:#e4d8c8;--border-hi:#c8b89a;
+  --accent:#5a3e28;--accent2:#7a5438;
+  --text:#261810;--muted:#9a8070;
+  --danger:#c84030;--success:#507840;--radius:8px;
+  --font-body:'Noto Sans KR',sans-serif;
+  --font-mono:'DM Mono',monospace;
+  --font-display:'Cormorant Garamond',serif;
+  --header-bg:#ffffff;
+  --card-shadow:0 1px 8px rgba(90,62,40,.08);
+  --btn-radius:8px;--accent-glow:none;
+  --step-bar-1:#5a3e28;--step-bar-2:#8a6848;--step-bar-3:#c89860;--step-bar-4:#e0b880;
+}
+[data-theme="midnight"]{
+  --bg:#05060e;--surface:#0c0e1a;--surface2:#131628;
+  --border:#1a1e38;--border-hi:#282e50;
+  --accent:#c8a060;--accent2:#e0bc80;
+  --text:#eae8f8;--muted:#5050780;
+  --danger:#e04858;--success:#48b878;--radius:10px;
+  --font-body:'Outfit',sans-serif;
+  --font-mono:'Space Mono',monospace;
+  --font-display:'Cormorant Garamond',serif;
+  --header-bg:#0c0e1a;
+  --card-shadow:0 0 28px rgba(200,160,96,.08),0 2px 12px rgba(0,0,0,.7);
+  --btn-radius:10px;--accent-glow:0 0 18px rgba(200,160,96,.2);
+  --step-bar-1:#c8a060;--step-bar-2:#a878c0;--step-bar-3:#6090d8;--step-bar-4:#e04858;
+}
 
 /* --- 전역 스크롤바 --- */
 ::-webkit-scrollbar{width:4px;height:4px;}
@@ -453,10 +527,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body,'Noto Sa
 .progress-labels{display:flex;justify-content:space-between;margin-bottom:4px;}
 .progress-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
 .progress-val{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);}
-.progress-track{height:3px;background:var(--border);border-radius:3px;overflow:hidden;}
-.progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 1s linear;}
-.step-track{height:2px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:4px;}
-.step-fill{height:100%;background:rgba(200,169,110,.35);border-radius:2px;transition:width 1s linear;}
+.progress-track{height:var(--bar-total-h,3px);background:var(--border);border-radius:4px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);border-radius:4px;transition:width 1s linear;}
+.step-track{height:var(--bar-step-h,4px);background:var(--border);border-radius:4px;overflow:hidden;margin-top:4px;}
+.step-fill{height:100%;background:linear-gradient(90deg, var(--step-bar-1,var(--accent)) 0%, var(--step-bar-2,var(--accent2)) 40%, var(--step-bar-3,#ff9060) 75%, var(--step-bar-4,var(--danger)) 100%);background-size:200% 100%;border-radius:4px;transition:width 1s linear;}
 .main-card{flex-shrink:1;min-height:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 16px 14px;text-align:center;margin-bottom:10px;box-shadow:var(--card-shadow,none);}
 .step-tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--accent);text-transform:uppercase;margin-bottom:6px;}
 .step-title-timer{font-weight:300;margin-bottom:12px;transition:color .3s;white-space:nowrap;overflow:hidden;width:100%;display:block;font-size:clamp(13px, calc(2.2dvh * var(--start-btn-size, 1)), 36px);}
@@ -1324,6 +1398,26 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
               <span class="theme-swatch" style="background:#f2ece0;border-color:#2c4a7c;"></span>
               <span class="theme-btn-info"><span class="theme-btn-name">페이퍼</span><span class="theme-btn-desc">크림 · 잉크 블루</span></span>
             </button>
+            <button class="theme-btn theme-btn-wide" data-theme="light">
+              <span class="theme-swatch" style="background:#EFF6FF;border-color:#10367D;"></span>
+              <span class="theme-btn-info"><span class="theme-btn-name">라이트 블루</span><span class="theme-btn-desc">화이트 · 딥 네이비</span></span>
+            </button>
+            <button class="theme-btn theme-btn-wide" data-theme="mocha">
+              <span class="theme-swatch" style="background:#12100e;border-color:#e8a060;"></span>
+              <span class="theme-btn-info"><span class="theme-btn-name">모카 다크</span><span class="theme-btn-desc">딥 브라운 · 앰버</span></span>
+            </button>
+            <button class="theme-btn theme-btn-wide" data-theme="slate">
+              <span class="theme-swatch" style="background:#0a0f1a;border-color:#60a8f0;"></span>
+              <span class="theme-btn-info"><span class="theme-btn-name">슬레이트</span><span class="theme-btn-desc">딥 네이비 · 아이스 블루</span></span>
+            </button>
+            <button class="theme-btn theme-btn-wide" data-theme="ivory">
+              <span class="theme-swatch" style="background:#faf6ef;border-color:#5a3e28;"></span>
+              <span class="theme-btn-info"><span class="theme-btn-name">아이보리</span><span class="theme-btn-desc">크림 · 다크 브라운</span></span>
+            </button>
+            <button class="theme-btn theme-btn-wide" data-theme="midnight">
+              <span class="theme-swatch" style="background:#05060e;border-color:#c8a060;"></span>
+              <span class="theme-btn-info"><span class="theme-btn-name">미드나이트</span><span class="theme-btn-desc">퓨어 블랙 · 골드</span></span>
+            </button>
           </div>
         </div>
       </div>
@@ -1646,6 +1740,44 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
         </div>
       </div>
 
+      <!-- 진행바 두께 설정 -->
+      <div class="setting-row">
+        <div class="collapsible-head" id="barThickHead">
+          <div><div class="setting-label">진행 바 두께</div><div class="setting-sub">전체 진행 바 · 단계 진행 바 두께 조절</div></div>
+          <span class="collapse-arrow" id="barThickArrow">+</span>
+        </div>
+        <div id="barThickBody" style="display:none;margin-top:10px;">
+          <div style="margin-bottom:12px;">
+            <div class="slider-header"><span class="slider-name">전체 진행 바</span><span class="slider-val" id="barTotalHVal">3px</span></div>
+            <input type="range" id="barTotalHSlider" min="1" max="16" step="1" value="3">
+            <div style="display:flex;justify-content:space-between;margin-top:3px;">
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">얇게</span>
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">굵게</span>
+            </div>
+          </div>
+          <div>
+            <div class="slider-header"><span class="slider-name">단계 진행 바</span><span class="slider-val" id="barStepHVal">4px</span></div>
+            <input type="range" id="barStepHSlider" min="1" max="20" step="1" value="4">
+            <div style="display:flex;justify-content:space-between;margin-top:3px;">
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">얇게</span>
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">굵게</span>
+            </div>
+          </div>
+          <!-- 미리보기 -->
+          <div style="margin-top:14px;padding:10px;background:var(--surface2);border-radius:var(--radius);">
+            <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:8px;letter-spacing:.08em;">미리보기</div>
+            <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:4px;">전체 진행</div>
+            <div id="barPreviewTotal" style="border-radius:4px;background:var(--border);overflow:hidden;margin-bottom:8px;">
+              <div style="width:60%;background:var(--accent);border-radius:4px;transition:height .2s;"></div>
+            </div>
+            <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:4px;">단계 진행</div>
+            <div id="barPreviewStep" style="border-radius:4px;background:var(--border);overflow:hidden;">
+              <div style="width:40%;border-radius:4px;background:linear-gradient(90deg,var(--step-bar-1,var(--accent)) 0%,var(--step-bar-2,var(--accent2)) 40%,var(--step-bar-3,#ff9060) 75%,var(--step-bar-4,var(--danger)) 100%);transition:height .2s;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 새로고침 민감도 -->
       <div class="setting-row">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -1713,6 +1845,8 @@ var pauseFlex    = parseInt(localStorage.getItem("pause_flex")||"2");
 var pauseFlexLandscape = parseInt(localStorage.getItem("pause_flex_landscape")||"2");
 var pauseBtnSizeLandscape = parseFloat(localStorage.getItem("pause_btn_size_landscape")||"1.0");
 var scrollSens   = parseFloat(localStorage.getItem("scroll_sens")||"0.3");
+var barTotalH    = parseInt(localStorage.getItem("bar_total_h")||"3");
+var barStepH     = parseInt(localStorage.getItem("bar_step_h")||"4");
 var wakeLockEnabled = localStorage.getItem("wake_lock_enabled") !== "false";
 var draftParams  = JSON.parse(JSON.stringify(voiceParams));
 var draftVoice   = elVoice;
@@ -1877,7 +2011,7 @@ function clearPending(){ pendingBadge.classList.remove("on"); }
 var THEME_NAMES={
   "dark":"골드 다크","modern":"모던","minimal":"미니멀","vivid":"비비드",
   "calm":"캄","noir":"누아르","latte":"라떼","ocean":"오션","paper":"페이퍼",
-  "light":"라이트","mocha":"모카","slate":"슬레이트","ivory":"아이보리","midnight":"미드나잇"
+  "light":"라이트 블루","mocha":"모카 다크","slate":"슬레이트","ivory":"아이보리","midnight":"미드나이트"
 };
 function applyTheme(t){
   currentTheme=t;
@@ -2006,6 +2140,18 @@ document.getElementById("pauseFlexHead").addEventListener("click",function(){
   arrow.textContent=open?"-":"+";
 });
 
+function applyBarTotalH(v){
+  barTotalH=parseInt(v)||3;
+  document.documentElement.style.setProperty("--bar-total-h", barTotalH+"px");
+  var preview=document.getElementById("barPreviewTotal");
+  if(preview){preview.style.height=barTotalH+"px";var fill=preview.firstElementChild;if(fill)fill.style.height=barTotalH+"px";}
+}
+function applyBarStepH(v){
+  barStepH=parseInt(v)||4;
+  document.documentElement.style.setProperty("--bar-step-h", barStepH+"px");
+  var preview=document.getElementById("barPreviewStep");
+  if(preview){preview.style.height=barStepH+"px";var fill=preview.firstElementChild;if(fill)fill.style.height=barStepH+"px";}
+}
 function applyScrollSens(v){
   scrollSens=parseFloat(v);
   localStorage.setItem("scroll_sens",scrollSens);
@@ -2017,6 +2163,26 @@ function applyScrollSens(v){
 document.getElementById("scrollSensSlider").addEventListener("input",function(){
   applyScrollSens(parseFloat(this.value));
   markPending();
+});
+document.getElementById("barTotalHSlider").addEventListener("input",function(){
+  applyBarTotalH(parseInt(this.value));
+  markPending();
+});
+document.getElementById("barStepHSlider").addEventListener("input",function(){
+  applyBarStepH(parseInt(this.value));
+  markPending();
+});
+// 진행 바 두께 접기
+document.getElementById("barThickHead").addEventListener("click",function(){
+  var body=document.getElementById("barThickBody");
+  var arrow=document.getElementById("barThickArrow");
+  var open=body.style.display==="none";
+  body.style.display=open?"block":"none";
+  arrow.textContent=open?"-":"+";
+  if(open){
+    applyBarTotalH(barTotalH);
+    applyBarStepH(barStepH);
+  }
 });
 
 function applyRecipeDropdown(visible){
@@ -2034,7 +2200,9 @@ function applyRecipeDropdown(visible){
   if(tog)tog.checked=visible;
 }
 // 화면 회전 시 드롭다운/목록 재적용
-window.addEventListener("orientationchange",function(){setTimeout(function(){applyRecipeDropdown(recipeDropdownVisible);},200);});
+window.addEventListener("orientationchange",function(){setTimeout(function(){applyRecipeDropdown(recipeDropdownVisible);
+  applyBarTotalH(barTotalH);
+  applyBarStepH(barStepH);},200);});
 window.addEventListener("resize",function(){applyRecipeDropdown(recipeDropdownVisible);});
 function applyLandscapeReverse(v){
   landscapeReverse=v;
@@ -4374,6 +4542,13 @@ recipeApplyBtn.addEventListener("click",async function(){
 // --- 설정 모달 ---
 function openSettings(){
   settingsModal.classList.add("open");
+  // 진행 바 슬라이더 동기화
+  var ts=document.getElementById("barTotalHSlider");
+  var ss=document.getElementById("barStepHSlider");
+  var tv=document.getElementById("barTotalHVal");
+  var sv=document.getElementById("barStepHVal");
+  if(ts){ts.value=barTotalH;if(tv)tv.textContent=barTotalH+"px";}
+  if(ss){ss.value=barStepH;if(sv)sv.textContent=barStepH+"px";}
   draftParams=JSON.parse(JSON.stringify(voiceParams));
   draftVoice=elVoice;draftKey=elKey;draftKey2=elKey2;draftKey3=elKey3;
   voiceToggle.checked=voiceEnabled;
@@ -4634,6 +4809,8 @@ async function applySettings(){
   localStorage.setItem("pause_flex_landscape",pauseFlexLandscape);
   localStorage.setItem("pause_btn_size_landscape",pauseBtnSizeLandscape);
   localStorage.setItem("scroll_sens",scrollSens);
+  localStorage.setItem("bar_total_h",barTotalH);
+  localStorage.setItem("bar_step_h",barStepH);
   var url=workerUrlInput.value.trim().replace(/\/$/,"");
   if(url){workerUrl=url;localStorage.setItem("worker_url",workerUrl);}
   if(workerUrl){
@@ -4907,7 +5084,14 @@ function updateUI(){
   document.getElementById("timeDisplay").textContent=fmt(remaining);
   document.getElementById("timeDisplay").classList.toggle("urgent",remaining<=5&&remaining>0);
   var stepEl=(s.sec||0)-remaining;
-  document.getElementById("stepFill").style.width=((stepEl/Math.max(s.sec||1,1))*100)+"%";
+  var stepPct=(stepEl/Math.max(s.sec||1,1))*100;
+  var sfill=document.getElementById("stepFill");
+  sfill.style.width=stepPct+"%";
+  // 진행률에 따라 gradient backgroundPosition 이동 (full gradient = 200% width)
+  if(stepPct>0){
+    sfill.style.backgroundSize=(Math.max(200/stepPct*100,200))+"% 100%";
+    sfill.style.backgroundPosition="left center";
+  }
   document.getElementById("totalFill").style.width=((totalElapsed/Math.max(total,1))*100)+"%";
   document.getElementById("totalTimeVal").textContent=totalElapsed+" / "+total+"초";
   document.getElementById("totalElapsedDisp").textContent=fmtSec(totalElapsed);
@@ -5510,6 +5694,18 @@ document.getElementById("stopBtn").addEventListener("click",stopTimer);
     slider.addEventListener("change",function(){
       localStorage.setItem("ptr_threshold",this.value);
     });
+  })();
+
+  // 진행 바 두께 슬라이더 초기화
+  (function(){
+    var ts=document.getElementById("barTotalHSlider");
+    var ss=document.getElementById("barStepHSlider");
+    var tv=document.getElementById("barTotalHVal");
+    var sv=document.getElementById("barStepHVal");
+    if(ts){ts.value=barTotalH;if(tv)tv.textContent=barTotalH+"px";}
+    if(ss){ss.value=barStepH;if(sv)sv.textContent=barStepH+"px";}
+    applyBarTotalH(barTotalH);
+    applyBarStepH(barStepH);
   })();
 
   // Pull-to-refresh (모든 브라우저 환경)
